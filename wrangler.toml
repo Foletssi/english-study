@@ -1,0 +1,75 @@
+# Eastudy V3 — Cloudflare Pages configuration.
+#
+# Pages reads this for the local dev server and for `wrangler pages deploy`.
+# Note what is *not* here: the Supabase URL, the service role key and the two
+# signing secrets. Those are encrypted variables set per environment in the
+# Cloudflare dashboard (or with `wrangler pages secret put`), never committed.
+# The only secret this file can name is the R2 binding, which is a resource
+# reference rather than a credential.
+
+name = "eastudy-v3"
+compatibility_date = "2025-01-01"
+
+# `nodejs_compat` is required by the ticket signer, which uses WebCrypto via
+# `crypto.subtle` on a HMAC key. Without the flag the global is present but the
+# HMAC import is not, and every ticket request fails with an opaque 500.
+compatibility_flags = ["nodejs_compat"]
+
+# The built output. `wrangler pages deploy dist` uploads exactly this tree:
+# the static shell and the two bundles. Functions are NOT part of it — Pages
+# reads them from `<cwd>/functions`, and `tools/build.mjs` asserts that no
+# `functions/` directory reaches `dist/` (it would be served as static assets).
+pages_build_output_dir = "dist"
+
+# ---------------------------------------------------------------------------
+# Local development
+# ---------------------------------------------------------------------------
+#
+# `wrangler pages dev dist` reads [vars] from below. Keep these to values that
+# are safe to commit — the local intake origin is loopback, and the deployment
+# label is a string. Anything else goes in `.dev.vars`, which is gitignored.
+#
+# .dev.vars is the file the local server actually reads for secrets:
+#
+#   SUPABASE_URL="https://xxxx.supabase.co"
+#   SUPABASE_SERVICE_ROLE_KEY="eyJ..."
+#   INTAKE_HANDSHAKE_SECRET="..."
+#   PLAYBACK_TICKET_SECRET="..."
+#
+[vars]
+EASTUDY_DEPLOYMENT = "local"
+INTAKE_PUBLIC_URL = "http://127.0.0.1:8790/v3"
+
+# ---------------------------------------------------------------------------
+# R2
+# ---------------------------------------------------------------------------
+#
+# The processed media bucket: playlists, segments, and the audio-derived files
+# under each video's `playback_prefix`.
+#
+# `preview_bucket_name` is what makes `/api/media/preview` work in local
+# development — the handler reads `env.PROCESSING_BUCKET`, and without a preview
+# binding that is undefined and the audio preview 500s.
+#
+[[r2_buckets]]
+binding = "PROCESSING_BUCKET"
+bucket_name = "eastudy-v3-media-hk"
+preview_bucket_name = "eastudy-v3-media-hk"
+
+# ---------------------------------------------------------------------------
+# Required environment variables (set in the dashboard, NOT here)
+# ---------------------------------------------------------------------------
+#
+#   SUPABASE_URL                  https://<project>.supabase.co
+#   SUPABASE_SERVICE_ROLE_KEY     server-only; bypasses RLS. Never in env.js.
+#   PLAYBACK_TICKET_SECRET        HMAC key for /api/media tickets
+#   INTAKE_HANDSHAKE_SECRET       shared secret with the local intake service
+#   INTAKE_PUBLIC_URL             where the operator's browser reaches intake
+#   PROCESSING_BUCKET             the R2 binding above (a binding, not a var)
+#   MEDIA_PROFILE                 optional; defaults to balanced-540-v1
+#
+# The build (tools/build.mjs) writes these six into the browser instead, and
+# refuses the build if the anon key looks like a service role key:
+#
+#   EASTUDY_API_BASE, EASTUDY_INTAKE_URL, EASTUDY_SUPABASE_URL,
+#   EASTUDY_SUPABASE_ANON_KEY, EASTUDY_DEPLOYMENT, EASTUDY_VERSION

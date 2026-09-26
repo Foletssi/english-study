@@ -1,0 +1,26 @@
+{
+  "name": "eastudy-v3",
+  "version": "3.0.0",
+  "private": true,
+  "description": "Eastudy V3 — 英语视频学习站(Cloudflare Pages + Supabase + R2)",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "build:watch": "node tools/build.mjs --watch",
+    "dev": "node tools/dev.mjs",
+    "test": "npm run test:contracts && npm run test:unit",
+    "test:contracts": "node tests/contracts/student-admin-mapping.mjs --strict",
+    "test:unit": "node --test \"tests/unit/*.test.mjs\"",
+    "check": "npm run test && npm run build",
+    "pages:dev": "npm run build && wrangler pages dev dist",
+    "pages:deploy": "npm run build && wrangler pages deploy dist",
+    "intake": "python -m services.intake.server --port 8790 --data ./runtime/intake"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0",
+    "wrangler": "^3.90.0"
+  }
+}

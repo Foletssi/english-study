@@ -1,0 +1,20 @@
+{
+  "ok": true,
+  "mode": "proxy",
+  "providerName": "iseeu",
+  "endpoint": "https://sub2.iseeu.store/v1/images/generations",
+  "jobId": null,
+  "output": "F:\\英语网页重构\\docs\\design\\ui-variants\\player-v02-desktop-dark.png",
+  "bytes": 1988844,
+  "responseId": null,
+  "image": {
+    "type": "image_generation_call",
+    "model": "gpt-image-2.5-flare",
+    "quality": "high",
+    "size": "1536x1024",
+    "output_format": "png",
+    "revised_prompt": null
+  },
+  "quota": null,
+  "user": null
+}

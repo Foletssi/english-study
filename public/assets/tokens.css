@@ -1,0 +1,60 @@
+/* ==========================================================================
+   Eastudy V3 — 尺度 token
+
+   这个文件**不含任何颜色**。颜色全部由 /assets/themes-12.css 负责。
+   两个文件的分工：
+
+     tokens.css      与主题无关的东西：圆角、间距、字号、行高、时长、字体、
+                     布局尺寸（侧边栏宽、顶栏高、最小点击区）
+     themes-12.css   12 套色系 × 浅深两版，以及把规范里的语义名映射到
+                     组件已经在引用的名字上（--bg / --surface / --fg / …）
+
+   为什么分成两个文件而不是一个：
+   颜色是**按主题换的那一半**，尺度是**永远不动的那一半**。混在一起的时候，
+   想加第 13 套主题就得在一个 300 行的文件里找色调该插在哪，还容易顺手把
+   间距改掉。分开之后，改配色只需打开 themes-12.css。
+
+   这里的尺度值仍然只声明一次 —— 旧版 app.css 自带四个互相覆盖的 :root
+   块（紫深、紫浅、青浅、青深），同一件事谁都可能赢。 */
+
+:root {
+  /* --- 字号 --- */
+  --text-xs: 12px; --text-sm: 13px; --text-base: 15px;
+  --text-lg: 17px; --text-xl: 21px; --text-2xl: 27px; --text-3xl: 34px;
+
+  /* --- 行高与字体 --- */
+  --leading-tight:   1.25;
+  --leading-normal:  1.55;
+  --leading-relaxed: 1.75;
+  --font-mono: "SFMono-Regular", "JetBrains Mono", Consolas, "Liberation Mono", monospace;
+  --font-sans: "Inter", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  --font-read: "Source Serif 4", "Songti SC", Georgia, "Times New Roman", serif;
+
+  /* --- 圆角 --- */
+  --radius-xs: 6px;
+  --radius-sm: 9px;
+  --radius-md: 13px;
+  --radius-lg: 18px;
+  --radius-xl: 26px;
+  --radius-pill: 999px;
+
+  /* --- 间距 --- */
+  --space-1: 4px;   --space-2: 8px;   --space-3: 12px;  --space-4: 16px;
+  --space-5: 22px;  --space-6: 30px;  --space-7: 42px;  --space-8: 58px;
+
+  /* --- 动效 ---
+     规范第 6 / 7 节：状态切换 160ms ease；主题切换也只有这一个淡化时长。 */
+  --ease: cubic-bezier(.32, .72, 0, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 320ms;
+  --dur-theme: 160ms;
+  --motion:      var(--dur-base);
+  --motion-fast: var(--dur-fast);
+  --motion-slow: var(--dur-slow);
+
+  /* --- 布局尺寸 --- */
+  --sidebar-w: 250px;
+  --topbar-h: 58px;
+  --tap-min: 44px;
+}

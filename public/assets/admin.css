@@ -1,0 +1,706 @@
+/* Eastudy V3 — 控制端样式。
+
+   与学员端共用 tokens.css,共用 app.css 里的基础层(表单、按钮、卡片、表格、
+   状态徽章、Toast、Modal、上传面板)。这里只写控制端独有的部分:侧边栏外壳、
+   上传流程卡片、字幕校对工作台。
+
+   老版本控制端把 admin.css 和 app.css 各复制一份、各自再定义一套 :root,
+   加在一起有 4 套变量在互相覆盖。V3 里控制端只多这一个文件。 */
+
+@import url('/assets/app.css');
+
+/* ============================================================ 外壳 */
+
+.admin-body { background: var(--bg-sunken); }
+
+.shell { display: grid; grid-template-columns: var(--sidebar-w) minmax(0, 1fr); min-height: 100vh; }
+.shell.is-collapsed { grid-template-columns: 64px minmax(0, 1fr); }
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--sidebar-bg);
+  color: var(--sidebar-fg);
+  border-right: 1px solid var(--sidebar-border);
+  overflow-y: auto;
+  z-index: 45;
+}
+.sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: var(--topbar-h);
+  padding: 0 var(--space-4);
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--sidebar-border);
+}
+.sidebar__logo {
+  display: grid; place-items: center;
+  width: 28px; height: 28px; flex-shrink: 0;
+  border-radius: var(--radius-md);
+  background: var(--brand-accent);
+  color: #fff; font-size: 16px; font-weight: 700;
+}
+.sidebar__name { font-size: var(--text-sm); font-weight: 600; letter-spacing: 0.01em; }
+.sidebar__group { padding: var(--space-4) var(--space-3) var(--space-1); }
+.sidebar__group-label {
+  padding: 0 10px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sidebar-muted);
+}
+.sidebar__list { display: flex; flex-direction: column; gap: 1px; padding: 0 8px; }
+.sidebar__link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  font-size: var(--text-sm);
+  color: var(--sidebar-fg);
+  border-radius: var(--radius-md);
+  opacity: 0.82;
+  transition: background var(--motion-fast) var(--ease), opacity var(--motion-fast) var(--ease);
+}
+.sidebar__link:hover { background: var(--sidebar-hover); opacity: 1; text-decoration: none; }
+.sidebar__link.is-active { background: var(--sidebar-active); opacity: 1; font-weight: 500; }
+.sidebar__icon { width: 18px; text-align: center; font-size: 15px; flex-shrink: 0; }
+.sidebar__label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sidebar__badge {
+  margin-left: auto;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--danger);
+  border-radius: var(--radius-pill);
+}
+.sidebar__foot { margin-top: auto; padding: var(--space-3) 8px var(--space-4); border-top: 1px solid var(--sidebar-border); }
+.sidebar__foot-actions { display: flex; flex-direction: column; gap: 1px; }
+.sidebar__button {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 8px 10px;
+  font: inherit; font-size: var(--text-sm);
+  color: var(--sidebar-fg);
+  background: transparent; border: none; border-radius: var(--radius-md);
+  cursor: pointer; opacity: 0.82; text-align: left;
+}
+.sidebar__button:hover { background: var(--sidebar-hover); opacity: 1; }
+
+/* 折叠态:只留图标,标签变成 title 提示。老版本把侧边栏做成 modal 抽屉,
+   在 1440px 的台式机上每次切页都要先点一下汉堡菜单。 */
+.shell.is-collapsed .sidebar__name,
+.shell.is-collapsed .sidebar__label,
+.shell.is-collapsed .sidebar__group-label,
+.shell.is-collapsed .sidebar__badge { display: none; }
+.shell.is-collapsed .sidebar__link,
+.shell.is-collapsed .sidebar__button { justify-content: center; padding: 8px; }
+.shell.is-collapsed .sidebar__group { padding: var(--space-3) 8px 2px; }
+.shell.is-collapsed .sidebar__brand { justify-content: center; padding: 0; }
+.shell.is-collapsed .sidebar__foot { padding: var(--space-3) 8px; }
+
+.admin-main { display: flex; flex-direction: column; min-width: 0; }
+
+.admin-topbar {
+  position: sticky; top: 0; z-index: 40;
+  display: flex; align-items: center; gap: var(--space-3);
+  height: var(--topbar-h);
+  padding: 0 var(--space-5);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.admin-topbar__toggle {
+  display: grid; place-items: center;
+  width: 34px; height: 34px;
+  font-size: 15px; color: var(--fg-muted);
+  background: transparent; border: none; border-radius: var(--radius-md);
+  cursor: pointer;
+}
+.admin-topbar__toggle:hover { background: var(--surface-hover); color: var(--fg); }
+.admin-topbar__title { font-size: var(--text-base); font-weight: 600; }
+.admin-topbar__right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+.admin-topbar__env {
+  padding: 2px 8px; font-size: var(--text-xs);
+  color: var(--fg-muted); background: var(--surface-sunken);
+  border-radius: var(--radius-pill); font-family: var(--font-mono);
+}
+
+/* 顶栏那个汉堡按钮 (admin/layout.js:73 的 `topbar__icon-btn admin-menu`)。
+   它在**宽屏是隐藏的** —— 宽屏有常驻侧边栏,再放一个"打开菜单"只会让人
+   去点它、然后什么都没发生。900px 以下侧边栏挪进抽屉,它才出现。 */
+.admin-menu { display: none; }
+
+/* 当前登录人。放在顶栏最右,是**唯一**一处能看到"我现在是谁"的地方,
+   所以给足对比度;但它不是操作入口,不加 hover。 */
+.admin-topbar__user { font-size: var(--text-sm); color: var(--fg-muted); }
+
+/* 侧边栏里滚动的那一层。侧边栏本身是 flex 列(品牌 / 导航 / foot),
+   导航项多于屏幕高度时,要滚的是导航而不是整条侧边栏 —— 否则折叠按钮
+   跟着一起被推下去,而它恰恰是用户想找的头一个东西。 */
+.sidebar__nav {
+  display: flex; flex-direction: column;
+  flex: 1; min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* 折叠按钮。图标是「⟨」,折叠后同一个字符转 180° 就行 —— 不必引第二个
+   字形,也不必引 SVG。 */
+.sidebar__collapse {
+  display: grid; place-items: center;
+  width: 100%; min-height: 32px;
+  font-size: 15px; line-height: 1;
+  color: var(--sidebar-fg, var(--fg-muted));
+  background: transparent; border: none; border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: transform var(--motion) var(--ease);
+}
+.sidebar__collapse:hover { background: var(--sidebar-hover); }
+.shell.is-collapsed .sidebar__collapse { transform: rotate(180deg); }
+
+.admin-outlet { flex: 1; padding: var(--space-5) var(--space-5) var(--space-7); max-width: 1440px; width: 100%; }
+
+.scrim { display: none; }
+
+/* ============================================================ 仪表盘 */
+
+.dash { display: flex; flex-direction: column; gap: var(--space-5); }
+.dash__cards { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+.dash-card {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: var(--space-4);
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+}
+.dash-card__value { font-size: var(--text-2xl); font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.dash-card__label { font-size: var(--text-xs); color: var(--fg-muted); }
+.dash-card.is-attention { border-color: var(--warn); }
+.dash-card.is-attention .dash-card__value { color: var(--warn-fg); }
+.dash__panels { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); align-items: start; }
+
+/* 概览行。三张 stat-card 并排 —— 和上面 .dash-card 的区别在于内容:
+   dash-card 是一个数字加一句话(学员详情页的四个计数),stat-card 是
+   「一个大数 + 一串分项」,所以分项要能对齐成两列,不然「视频总数」
+   那张有五行、旁边那张只有两行,数字列会对不齐。 */
+.dash__row {
+  display: grid; gap: var(--space-4); align-items: start;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+.stat-card {
+  display: flex; flex-direction: column; gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+}
+/* 可点的那张(视频总数)跳到视频管理页。只给可点的那张加 hover ——
+   卡片看起来一样但只有一张能点,是这一页最容易点错的地方。 */
+.stat-card.is-clickable { cursor: pointer; transition: border-color var(--motion) var(--ease); }
+.stat-card.is-clickable:hover { border-color: var(--brand-accent); }
+.stat-card.is-clickable:focus-visible { outline: 2px solid var(--brand-ring); outline-offset: 2px; }
+
+.stat-card__title { font-size: var(--text-xs); font-weight: 500; color: var(--fg-muted); }
+.stat-card__value {
+  margin: 0;
+  font-size: var(--text-3xl); font-weight: 600;
+  font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 1.1;
+}
+/* 分项用 dl,每项一个 div 包 dt/dd —— 数字右对齐并等宽,五行叠起来
+   才能一眼扫出哪一项在涨。 */
+.stat-card__rows { display: flex; flex-direction: column; gap: 2px; margin: var(--space-1) 0 0; }
+.stat-card__rows > div { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
+.stat-card__rows dt { font-size: var(--text-xs); color: var(--fg-muted); }
+.stat-card__rows dd { margin: 0; font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
+
+/* 趋势卡。它是个普通 .card,只是里面装的是柱图 —— 单独留一个钩子,
+   是为了断点里能把它整块放宽,不用靠 :nth-child 数它在第几个。 */
+.dash__trend { display: flex; flex-direction: column; gap: var(--space-2); }
+
+.pipeline-card { display: flex; flex-direction: column; gap: var(--space-3); }
+.pipeline-row { display: flex; flex-direction: column; gap: 4px; }
+.pipeline-row__bar { height: 8px; background: var(--surface-sunken); border-radius: var(--radius-pill); overflow: hidden; }
+.pipeline-row__fill { height: 100%; border-radius: inherit; }
+.pipeline-row__fill--waiting { background: var(--fg-subtle); }
+.pipeline-row__fill--ready { background: var(--success); }
+.pipeline-row__fill--failed { background: var(--danger); }
+.pipeline-row__fill--processing { background: var(--info); }
+.pipeline-row__meta { display: flex; justify-content: space-between; font-size: var(--text-xs); color: var(--fg-muted); }
+
+/* 近 7 天活跃的柱图。老版本用内联 SVG 画 (sparkline__bar 是 fill),
+   现在是 DOM 柱 —— 每一列是 flex 纵向的 col,柱子靠 height 百分比撑起来。
+   换成 DOM 的原因:内联 SVG 的尺寸要靠 viewBox 和字体一起算,而这里的
+   柱子数会随"有几天有数据"变(1 到 7 根),SVG 那套比例换算每变一次就要
+   重算一次;DOM 只要给 col 一个固定高度,柱子自己按百分比分。 */
+.spark {
+  display: flex; align-items: flex-end; gap: 6px;
+  height: 96px; padding-top: var(--space-3);
+}
+.spark__col {
+  display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
+  flex: 1; min-width: 0; height: 100%; gap: 4px;
+}
+.spark__bar {
+  width: 100%; max-width: 34px;
+  min-height: 2px;
+  background: var(--brand-accent);
+  border-radius: var(--radius-xs) var(--radius-xs) 0 0;
+  transition: height var(--motion-slow) var(--ease);
+}
+.spark__label {
+  flex: none;
+  font-size: 10px; font-variant-numeric: tabular-nums;
+  color: var(--fg-subtle);
+}
+
+/* 最近任务的小列表。`li` 自己不写规则,靠下面这条 —— 它是 dashboard
+   和 jobs 页共用的一行三列布局:左边标识、中间徽章、右边时间。 */
+.mini-list { display: flex; flex-direction: column; gap: 2px; }
+.mini-list > li {
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: 7px 10px; border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+}
+.mini-list > li:hover { background: var(--surface-hover); }
+.mini-list__main {
+  min-width: 0; flex: 1;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-family: var(--font-mono); font-size: var(--text-xs); color: var(--fg-muted);
+}
+.mini-list__time { flex: none; font-size: var(--text-xs); color: var(--fg-subtle); }
+
+.job-list { display: flex; flex-direction: column; gap: 2px; }
+.job-list__row {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+  padding: 8px 10px; border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+}
+.job-list__row:hover { background: var(--surface-hover); }
+.job-list__title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.job-list__meta { display: flex; align-items: center; gap: 8px; flex-shrink: 0; font-size: var(--text-xs); color: var(--fg-muted); }
+
+/* ============================================================ 处理队列 */
+
+/* 队列页是「一个视频一张卡」,不是「一个任务一行」。理由写在 jobs.js 的
+   文件头:老版本列任务,重试十一次就出来十一张卡,操作员看不出是视频卡住了
+   还是队列在忙。分组由服务端做,这里只负责把一张卡画清楚。 */
+.queue { display: flex; flex-direction: column; gap: var(--space-4); }
+.queue__summary { display: block; }
+.queue__list { display: flex; flex-direction: column; gap: var(--space-3); }
+
+.queue-card {
+  display: flex; flex-direction: column; gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+}
+/* 卡住 = 租约过期但任务还写着 RUNNING(worker 被 kill 或主机重启留下了
+   这行)。它和"失败"不是一回事:失败是流水线明确放弃了,卡住是没人认领。
+   所以用警示色描边而不是错误色 —— 它多半会自己恢复。 */
+.queue-card.is-stalled { border-color: var(--warn); box-shadow: 0 0 0 1px var(--warn); }
+
+.queue-card__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
+.queue-card__title-wrap { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.queue-card__title { font-size: var(--text-base); font-weight: 600; word-break: break-word; }
+.queue-card__badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.queue-card__actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; flex-wrap: wrap; }
+
+.queue-card__body { display: flex; flex-direction: column; gap: var(--space-3); }
+
+/* 四个键值对并排。用 auto-fit 而不是固定四列:租约和最近更新这两项是
+   条件渲染的(没有 lease_until 就不画),固定列数会让缺项的那张卡空出
+   一格,看起来像数据没加载出来。 */
+.queue-card__meta {
+  display: grid; gap: var(--space-2) var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+}
+.queue-card__meta > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.queue-card__meta dt { font-size: var(--text-xs); color: var(--fg-muted); }
+.queue-card__meta dd { margin: 0; font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
+
+.queue-card__error {
+  margin: 0; padding: 10px 12px;
+  font-family: var(--font-mono); font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  color: var(--danger-fg); background: var(--danger-bg);
+  border-radius: var(--radius-md);
+  overflow-wrap: anywhere;
+}
+.queue-card__empty { margin: 0; font-size: var(--text-sm); color: var(--fg-muted); }
+
+/* ============================================================ 字幕审核 */
+
+/* 一屏一句、行内可编辑。老版本用的是同一份 .subtitles__* 类名但结构不同
+   (行里嵌字段),现在是三个格子:时间 / 正文 / 操作。 */
+.review { display: flex; flex-direction: column; gap: var(--space-4); }
+.review__status { font-size: var(--text-sm); color: var(--fg-muted); }
+.review__list { display: block; }
+
+.review-list { display: flex; flex-direction: column; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+
+.review-row {
+  display: grid; gap: var(--space-3);
+  grid-template-columns: 200px minmax(0, 1fr) auto;
+  align-items: start;
+  padding: var(--space-3);
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+}
+.review-row:focus-within { border-color: var(--brand-accent); box-shadow: 0 0 0 2px var(--brand-ring); }
+
+.review-row__times { display: flex; align-items: center; gap: 6px; }
+.review-row__dash { color: var(--fg-subtle); font-size: var(--text-xs); flex: none; }
+/* 试听键。它是这一行里唯一的播放动作,而时间输入框是纯文本 —— 不做出
+   按钮形状的话,操作员会先去改时间,而不是先听一遍。 */
+.review-row__play {
+  display: grid; place-items: center;
+  width: 30px; height: 30px; flex: none;
+  font-size: 11px; line-height: 1;
+  color: var(--fg-muted);
+  background: var(--surface-sunken); border: 1px solid var(--border); border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: color var(--motion) var(--ease), border-color var(--motion) var(--ease);
+}
+.review-row__play:hover { color: var(--brand-accent); border-color: var(--brand-accent); }
+
+.review-row__texts { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.review-row__ops { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+
+@media (max-width: 1100px) {
+  /* 三列放不下时:时间行和操作行都降到正文下面,正文占满。顺序上正文
+    仍然最靠前 —— 改错别字是这张页面上最高频的动作。 */
+  .review-row { grid-template-columns: minmax(0, 1fr); }
+  .review-row__texts { order: 1; }
+  .review-row__times { order: 0; }
+  .review-row__ops { order: 2; }
+}
+
+
+/* ============================================================ 上传 */
+
+.upload-drop {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  padding: var(--space-6);
+  text-align: center;
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-sunken);
+  cursor: pointer;
+  transition: border-color var(--motion-fast) var(--ease), background var(--motion-fast) var(--ease);
+}
+.upload-drop:hover, .upload-drop.is-over { border-color: var(--brand-accent); background: var(--brand-soft); }
+.upload-drop__icon { font-size: 28px; }
+.upload-drop__title { font-size: var(--text-base); font-weight: 500; }
+.upload-drop__hint { font-size: var(--text-xs); color: var(--fg-muted); }
+
+/* ============================================================ 字幕校对 */
+
+.subtitles { display: flex; flex-direction: column; gap: var(--space-4); }
+.subtitles__head {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-4);
+  flex-wrap: wrap;
+  padding: var(--space-4);
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+}
+.subtitles__title { font-size: var(--text-lg); }
+.subtitles__meta { display: flex; gap: var(--space-3); flex-wrap: wrap; font-size: var(--text-xs); color: var(--fg-muted); }
+.subtitles__actions { display: flex; gap: 6px; align-items: center; }
+
+.subtitles__list { display: flex; flex-direction: column; gap: var(--space-2); }
+.subtitles__row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: start;
+  padding: var(--space-3);
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+}
+.subtitles__row.is-active { border-color: var(--brand-accent); box-shadow: 0 0 0 2px var(--brand-ring); }
+.subtitles__row.is-dirty { border-left: 3px solid var(--warn); }
+.subtitles__index { padding-top: 4px; font-family: var(--font-mono); font-size: var(--text-xs); color: var(--fg-subtle); }
+.subtitles__fields { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.subtitles__times { display: flex; align-items: center; gap: 6px; }
+.subtitles__times span { color: var(--fg-subtle); font-size: var(--text-xs); }
+.subtitles__translation { font-size: var(--text-sm); }
+.subtitles__words { display: flex; gap: 4px; flex-wrap: wrap; }
+.subtitles__row-actions { display: flex; flex-direction: column; gap: 4px; }
+.subtitles__word-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px;
+  font-size: var(--text-xs);
+  color: var(--teach-key-fg); background: var(--teach-key-bg);
+  border-radius: var(--radius-pill);
+}
+.subtitles__save-bar {
+  position: sticky; bottom: 0;
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+}
+.subtitles__save-state { font-size: var(--text-sm); color: var(--fg-muted); }
+.subtitles__save-state.is-dirty { color: var(--warn-fg); font-weight: 500; }
+.subtitles__save-actions { display: flex; gap: 6px; }
+
+/* ============================================================ 学员 / 邀请码 */
+
+.learners { display: flex; flex-direction: column; gap: var(--space-4); }
+.learners__codes { display: flex; flex-direction: column; gap: var(--space-3); }
+/* 两个页签(学员 / 邀请码)共用的内容槽。它是空的容器 —— 页面切换时整块
+   换掉,自己不需要布局,但必须存在,否则 mount 找不到落点。 */
+.learners__body { display: flex; flex-direction: column; gap: var(--space-3); }
+
+/* 生成邀请码的结果区。里面可能是一段可复制文本(成功)或一行错误。
+   最小高度留出来,免得点一下按钮整页往下跳 40px。 */
+.invite-result { display: flex; flex-direction: column; gap: var(--space-2); min-height: 0; }
+.invite-result:empty { display: none; }
+
+/* 视频管理页。这一页和学员页共用 .page + .table,单独加一个钩子是为了
+   让「创建」这类页面级的动作有个能挂的地方,不靠 :first-child 猜。 */
+.admin-videos { display: flex; flex-direction: column; gap: var(--space-4); }
+.admin-videos .toolbar { margin-bottom: 0; }
+
+.code-grid { display: grid; gap: 6px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.code-cell {
+  display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  padding: 6px 10px;
+  background: var(--surface-sunken); border-radius: var(--radius-md);
+}
+.code-cell__value { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.04em; }
+.code-cell__copy {
+  padding: 0 4px; font-size: 13px;
+  background: transparent; border: none; color: var(--fg-muted); cursor: pointer;
+}
+.code-cell__copy:hover { color: var(--brand-accent); }
+.code-cell.is-used { opacity: 0.5; }
+
+/* ---------------------------------------------- 学员详情 */
+
+.learner-detail { display: flex; flex-direction: column; gap: var(--space-4); }
+
+/* 详情页的页头比列表页矮一档:返回链接 + 学员名 + 会员状态三行挤在
+   一起,如果沿用 .page 的 58px 间距,页头会占掉手机端半屏,而这一页
+   真正要看的是下面的数字卡。 */
+.learner-detail-page { gap: var(--space-4); }
+.learner-detail-page .page__head { gap: 4px; }
+.learner-detail-page .page__title { font-size: var(--text-xl); }
+
+.page__back {
+  display: inline-block; margin-bottom: 4px;
+  font-size: var(--text-xs); color: var(--fg-muted); text-decoration: none;
+}
+.page__back:hover { color: var(--brand-accent); }
+
+/* A card per concern, so the profile is readable even when one of the
+   auxiliary queries failed and its card is showing a hint instead of data. */
+.learner-detail .card { padding: var(--space-4); }
+.card__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
+.card__meta { font-size: var(--text-xs); color: var(--fg-muted); }
+.profile-fields { display: flex; flex-direction: column; margin-top: var(--space-2); }
+
+/* Numbers that could not be loaded render as an em dash; dimming them keeps
+   "unknown" from reading as "zero" at a glance. */
+.dash-card.is-unknown .dash-card__value { color: var(--fg-subtle); }
+
+.plan-list { display: flex; flex-direction: column; gap: 2px; margin-top: var(--space-2); }
+.plan-list__row {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+  padding: 6px 0; border-bottom: 1px solid var(--border-subtle);
+}
+.plan-list__row:last-child { border-bottom: none; }
+.plan-list__title { font-size: var(--text-sm); }
+.plan-list__meta { font-size: var(--text-xs); color: var(--fg-muted); }
+
+/* ============================================================ 设置 */
+
+.settings { display: flex; flex-direction: column; gap: var(--space-5); }
+.settings__health, .settings__form, .settings__ai { display: flex; flex-direction: column; gap: var(--space-3); }
+
+/* 提交行。推到右边并和上面的表单之间留一道分隔线 —— 这一页有两个独立的
+   「保存」(处理参数 / 第三方模型服务),不留缝的话分不清按钮归哪一段。 */
+.settings__save {
+  display: flex; justify-content: flex-end; gap: 8px;
+  margin-top: var(--space-2); padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* 依赖健康:每张卡一项依赖。老版本用的是 .health-row*(一行一项,圆点 +
+   文字),现在改成卡片 —— 一项依赖里除了「通/不通」,还可能带一段错误详情
+   和三个能力数字,挤在一行里读不出来。 */
+.health-grid {
+  display: grid; gap: var(--space-3); align-items: stretch;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+.health__stamp { margin-top: var(--space-2); font-size: var(--text-xs); color: var(--fg-subtle); }
+
+.health-card {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+}
+.health-card.is-ok { border-left: 3px solid var(--success); }
+.health-card.is-bad { border-left: 3px solid var(--danger); }
+.health-card__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.health-card__name { font-size: var(--text-sm); font-weight: 600; }
+.health-card__detail { margin: 0; font-size: var(--text-xs); color: var(--fg-muted); }
+.health-card__error {
+  margin: 0; padding: 8px 10px;
+  font-family: var(--font-mono); font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  color: var(--danger-fg); background: var(--danger-bg);
+  border-radius: var(--radius-sm);
+  overflow-wrap: anywhere;
+}
+/* 上传服务的三个能力数字(可用磁盘 / 分片范围 / 进行中会话)。只有 intake
+   那一项带得动,所以是条件渲染的 —— 卡片高度因此不一致,靠 grid 默认的
+   stretch 拉平。 */
+.health-card__caps { display: flex; flex-direction: column; gap: 2px; margin: var(--space-1) 0 0; }
+.health-card__caps > div { display: flex; justify-content: space-between; gap: var(--space-3); }
+.health-card__caps dt { font-size: var(--text-xs); color: var(--fg-muted); }
+.health-card__caps dd { margin: 0; font-size: var(--text-xs); font-variant-numeric: tabular-nums; }
+
+.profile-field { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding: var(--space-3) 0; border-bottom: 1px solid var(--border-subtle); }
+.profile-field:last-child { border-bottom: none; }
+.profile-field__label { font-size: var(--text-sm); color: var(--fg-muted); }
+.profile-field__value { font-size: var(--text-sm); font-weight: 500; }
+
+/* ------------------------------------------------- 第三方模型服务(设置页)
+
+   检测结果是一块独立的信息条, 不是 toast。原因很实际: 通道检测经常失败,
+   而失败时运维要做的事是**照着提示改表单** —— 域名解析不了就去改地址, 鉴权
+   失败就去换密钥。toast 几秒后自己消失, 正好在他开始改的时候消失。 */
+.ai-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+
+.ai-result {
+  margin-top: var(--space-3);
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-sunken);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  word-break: break-word;
+}
+.ai-result.is-pending { color: var(--fg-muted); }
+.ai-result.is-ok { border-color: var(--success); color: var(--success-fg, var(--success)); }
+.ai-result.is-bad { border-color: var(--danger); color: var(--danger); }
+
+/* ------------------------------------------------- AI 指令(只读展示)
+
+   <details> 默认收起: 四段完整指令加起来两百多行, 展开着会把下面的保存按钮
+   推到两屏以外。运维平时不需要它, 只在判断"是提示词的问题还是模型的问题"
+   时才翻开。 */
+.ai-prompts { margin-top: var(--space-5); border-top: 1px solid var(--border); padding-top: var(--space-4); }
+.ai-prompts > summary {
+  cursor: pointer;
+  font-size: var(--text-base);
+  font-weight: 600;
+  padding: 6px 0;
+}
+.ai-prompts > summary::marker { color: var(--fg-muted); }
+.ai-prompts__list { display: flex; flex-direction: column; gap: var(--space-4); margin-top: var(--space-3); }
+
+.ai-prompt { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+.ai-prompt__head {
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: 10px var(--space-4);
+  background: var(--surface-sunken);
+  border-bottom: 1px solid var(--border);
+}
+.ai-prompt__name { font-size: var(--text-sm); font-weight: 600; margin: 0; }
+
+.ai-prompt__meta {
+  display: flex; flex-wrap: wrap; gap: var(--space-4);
+  padding: 10px var(--space-4);
+  font-size: var(--text-xs);
+}
+.ai-prompt__meta > div { display: flex; gap: 6px; }
+.ai-prompt__meta dt { color: var(--fg-muted); }
+.ai-prompt__meta dd { margin: 0; }
+
+/* pre 而不是 div: 指令里的缩进和换行是内容的一部分 —— 模型看到的确实是
+   "\n\n严格遵守以下规则", 展示时把它折叠掉就是在展示一份不存在的指令。
+   white-space: pre-wrap 让长行在窄屏换行而不是横向滚动。 */
+.ai-prompt__body {
+  margin: 0;
+  padding: var(--space-4);
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+  font-size: var(--text-xs);
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--fg);
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+/* ============================================================ 响应式 */
+
+@media (max-width: 1100px) {
+  .dash__panels { grid-template-columns: minmax(0, 1fr); }
+  .subtitles__row { grid-template-columns: 32px minmax(0, 1fr); }
+  .subtitles__row-actions { flex-direction: row; grid-column: 2; }
+}
+
+/* 平板/手机:侧边栏变成抽屉。900px 是老版本平板断点。 */
+@media (max-width: 900px) {
+  .shell, .shell.is-collapsed { grid-template-columns: minmax(0, 1fr); }
+  .sidebar {
+    position: fixed;
+    top: 0; bottom: 0; left: 0;
+    width: var(--sidebar-w);
+    transform: translateX(-100%);
+    transition: transform var(--motion) var(--ease);
+    box-shadow: var(--shadow-lg);
+  }
+  .shell.is-drawer-open .sidebar { transform: translateX(0); }
+  .shell.is-collapsed .sidebar__name,
+  .shell.is-collapsed .sidebar__label,
+  .shell.is-collapsed .sidebar__group-label,
+  .shell.is-collapsed .sidebar__badge { display: block; }
+  .shell.is-collapsed .sidebar__link,
+  .shell.is-collapsed .sidebar__button { justify-content: flex-start; padding: 8px 10px; }
+  .shell.is-collapsed .sidebar__brand { justify-content: flex-start; padding: 0 var(--space-4); }
+  .scrim {
+    display: block;
+    position: fixed; inset: 0; z-index: 44;
+    background: rgb(12 20 30 / 0.45);
+    opacity: 0; pointer-events: none;
+    transition: opacity var(--motion) var(--ease);
+  }
+  .shell.is-drawer-open .scrim { opacity: 1; pointer-events: auto; }
+  .admin-outlet { padding: var(--space-4) var(--space-3) var(--space-6); }
+  .admin-topbar { padding: 0 var(--space-3); }
+  .modal--lg { width: min(100% - 24px, 840px); }
+  .subtitles__head { flex-direction: column; align-items: stretch; }
+
+  /* 侧边栏挪进抽屉,所以这里必须给一个入口 —— 上面那条 .admin-menu
+     { display: none } 是宽屏用的。 */
+  .admin-menu { display: grid; }
+
+  /* 手机顶栏放不下「谁在线」。它是一行只读文字,挤掉的却是汉堡按钮的
+     可点区域,优先级最低。 */
+  .admin-topbar__user { display: none; }
+
+  /* 抽屉里的侧边栏不跟随折叠状态:折叠是宽屏的省地手段,手机端
+     侧边栏本来就只在抽屉里出现,再折一次会折成一条空栏。 */
+  .shell.is-collapsed .sidebar { width: var(--sidebar-w); }
+  .shell.is-collapsed .sidebar__nav { align-items: stretch; }
+
+  /* 队列卡的四个键值对:手机上两列就够,再少会把「租约剩余」这种
+     带单位的数字折行。 */
+  .queue-card__meta { grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); }
+  .queue-card__actions { width: 100%; }
+
+  /* 概览三张卡各自占满一行。手机上并排两张的话,「视频总数」的五行
+     分项会把卡片撑到比屏幕还高,而旁边那张空着一半。 */
+  .dash__row { grid-template-columns: minmax(0, 1fr); }
+  .stat-card__value { font-size: var(--text-2xl); }
+
+  /* 字幕审核在手机上时间输入框会顶到最右,那正是拇指区;让整行单列。 */
+  .review-row { grid-template-columns: minmax(0, 1fr); padding: var(--space-3) var(--space-2); }
+  .review-row__play { width: 36px; height: 36px; }
+  .review-row__ops { justify-content: flex-end; }
+
+  /* 依赖健康卡在手机上单列,附带的三个能力数字本来就窄。 */
+  .health-grid { grid-template-columns: minmax(0, 1fr); }
+  .dash__cards { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+}

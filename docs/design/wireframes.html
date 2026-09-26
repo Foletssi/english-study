@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eastudy V3 — 排版布局标注图（四屏）</title>
+<!--
+  这份文件的用途:把四个屏幕的排版、图标位置、尺寸标注摆在一页上,给
+  设计/出图工具做参照。
+
+  它不是产品的一部分, 不进构建, 也不被任何代码 import。所有尺寸都抄自
+  public/assets/tokens.css 和 public/assets/app.css —— 如果哪天对不上,
+  以那两个文件为准, 回来改这里。
+
+  图标形状直接用 src/ui/icons.js 里的同一批路径数据, 所以这张图上的
+  图标就是线上那颗, 不是"意思接近"的替代品。
+
+  标注编号的画法: 正文区的编号是元素右上角的小红圆角标, 压在元素的角上
+  而不是压在元素的中心 —— 压在中心就把要看的那个图标挡住了。顶栏高度只有
+  58px, 角标会被挤到边缘之外, 所以顶栏单独用一条 26px 的标尺带, 编号按
+  x 坐标排在同一列下方。
+-->
+<style>
+  :root {
+    --ink: #E8EDF5;
+    --ink-dim: #93A2B8;
+    --ink-faint: #5C6B82;
+    --paper: #0E1218;
+    --board: #161C25;
+    --line: #263041;
+    /* 产品色, 抄自 tokens.css :root */
+    --brand: #346DA5;
+    --brand-soft: #E8F1FA;
+    --brand-ink: #17263D;
+    --muted: #536983;
+    --faint: #7F93A8;
+    --hair: #DCE5EF;
+    --sunken: #EEF3F9;
+    --vip-bg: #E7F0FD;
+    --vip-fg: #1E4E8C;
+    --mark: #D8433A;
+    --mono: "SFMono-Regular", "JetBrains Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px 24px 96px;
+    background: var(--paper); color: var(--ink);
+    font: 14px/1.65 "Inter", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  .head { max-width: 1400px; margin: 0 auto 36px; }
+  .head h1 { font-size: 26px; margin: 0 0 10px; letter-spacing: .01em; }
+  .head p { margin: 0 0 6px; color: var(--ink-dim); font-size: 13.5px; max-width: 78ch; }
+  .head code { font-family: var(--mono); font-size: 12.5px; color: #9FD0FF; background: #1B2431; padding: 1px 6px; border-radius: 5px; }
+
+  .boards { max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 56px; }
+  .board__head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 4px; flex-wrap: wrap; }
+  .board__n { font-family: var(--mono); font-size: 12px; color: var(--mark); font-weight: 600; }
+  .board__title { font-size: 19px; font-weight: 600; margin: 0; }
+  .board__size { font-family: var(--mono); font-size: 12px; color: var(--ink-faint); }
+  .board__note { color: var(--ink-dim); font-size: 13px; margin: 6px 0 18px; max-width: 84ch; }
+  .board__note b { color: var(--ink); font-weight: 500; }
+
+  .stage { background: var(--board); border: 1px solid var(--line); border-radius: 16px; padding: 22px; overflow-x: auto; }
+
+  /* ---------- 线框画布 ---------- */
+  .wf { position: relative; background: #F7F9FC; color: var(--brand-ink); border-radius: 10px; overflow: hidden; flex: none; }
+  .wf--desk { width: 1120px; }
+  .wf--mob { width: 366px; display: flex; flex-direction: column; }
+
+  /* ---------- 标注编号 ---------- */
+  .dot {
+    position: absolute; z-index: 9;
+    display: grid; place-items: center;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--mark); color: #fff;
+    font: 600 11px/1 var(--mono);
+    box-shadow: 0 0 0 2px rgba(247,249,252,.9), 0 1px 4px rgba(0,0,0,.28);
+    pointer-events: none;
+  }
+  /* 正文区:压在元素右上角外侧 */
+  .dot--tr { top: -8px; right: -8px; }
+  /* 顶边元素:压在左上角外侧, 免得顶到画布外 */
+  .dot--tl { top: -8px; left: -8px; }
+  /* 通栏大块(视频区):编号放左上角内侧, 免得被画布裁掉 */
+  .dot--in { top: 10px; left: 10px; }
+
+  /* 顶栏标尺带:编号按 x 坐标排在顶栏正下方 */
+  .ruler {
+    position: relative; height: 26px;
+    background: #EDF2F8;
+    border-bottom: 1px dashed #C3D2E2;
+  }
+  .ruler .dot { top: 4px; margin-left: -9px; box-shadow: 0 0 0 2px #EDF2F8, 0 1px 3px rgba(0,0,0,.2); }
+
+  /* ---------- 顶栏 ---------- */
+  .tb { position: relative; height: 58px; display: flex; align-items: center; gap: 16px; padding: 0 16px; background: #fff; border-bottom: 1px solid var(--hair); }
+  .tb--mob { padding: 0 12px; }
+  .brand { display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--brand-ink); }
+  .logo { width: 28px; height: 28px; border-radius: 13px; background: var(--brand); color: #fff; display: grid; place-items: center; font: 600 14px/1 var(--mono); }
+  .tbnav { display: flex; gap: 2px; font-size: 14px; }
+  .tbnav span { padding: 8px 14px; border-radius: 9px; color: var(--muted); }
+  .tbnav span.on { color: var(--brand); background: var(--brand-soft); font-weight: 500; }
+  .tbright { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+  .ibtn { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 13px; color: var(--muted); }
+  .ibtn svg { display: block; }
+  .vip { padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--vip-fg); background: var(--vip-bg); }
+  .ava { width: 32px; height: 32px; border-radius: 50%; background: var(--brand-soft); color: var(--brand); display: grid; place-items: center; font-size: 13px; font-weight: 600; }
+
+  /* ---------- 内容区 ---------- */
+  .out { padding: 22px 16px 42px; }
+  .out--mob { padding: 16px 12px 92px; }
+  .out--flush { padding: 22px 16px 22px; }
+  .ttl { font-size: 34px; font-weight: 700; letter-spacing: -.01em; }
+  .ttl--mob { font-size: 21px; }
+  .sub { font-size: 15px; color: var(--muted); margin-top: 6px; }
+  .sub--mob { font-size: 13px; }
+
+  .blk { border: 1px dashed #B9C9DA; border-radius: 12px; background: #fff; }
+  .blk--soft { background: var(--sunken); border-style: solid; border-color: var(--hair); }
+  .lbl { font: 11px/1.4 var(--mono); color: var(--faint); letter-spacing: .02em; }
+
+  /* 继续学习主卡 */
+  .resume { position: relative; display: grid; grid-template-columns: 320px minmax(0,1fr); gap: 16px; padding: 16px; background: #fff; border: 1px solid var(--hair); border-radius: 18px; }
+  .resume--mob { grid-template-columns: minmax(0,1fr); }
+  .thumb { position: relative; aspect-ratio: 16/9; border-radius: 13px; background: linear-gradient(135deg, #C9D8E8, #A8BED4); display: grid; place-items: center; }
+  .pbtn { width: 46px; height: 46px; border-radius: 50%; background: rgba(255,255,255,.92); display: grid; place-items: center; color: var(--brand-ink); }
+  .bar { position: relative; height: 6px; border-radius: 99px; background: var(--sunken); overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 46%; background: var(--brand); }
+  .cta { display: inline-block; padding: 9px 18px; border-radius: 13px; background: var(--brand); color: #fff; font-size: 14px; font-weight: 500; }
+  .minirow { display: flex; gap: 16px; margin-top: 16px; }
+  .mini { position: relative; flex: 1 1 220px; min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 16px; background: #fff; border: 1px solid var(--hair); border-radius: 13px; font-size: 13px; }
+
+  /* 卡片网格 */
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(4, 1fr); }
+  .grid--mob { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .vcard { position: relative; background: #fff; border: 1px solid var(--hair); border-radius: 18px; overflow: hidden; }
+  .vcard__cover { aspect-ratio: 16/9; background: linear-gradient(135deg, #D5E1EE, #B4C8DC); }
+  .vcard__body { padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+  .vcard__t { font-size: 15px; font-weight: 600; line-height: 1.35; }
+  .vcard__s { font-size: 12px; color: var(--muted); }
+  .vcard__m { display: flex; align-items: center; gap: 6px; }
+  .chip-s { padding: 2px 8px; border-radius: 999px; font-size: 11px; background: var(--sunken); color: var(--muted); }
+  .vcard__p { height: 3px; background: var(--sunken); border-radius: 2px; overflow: hidden; }
+  .vcard__p i { display: block; height: 100%; width: 55%; background: var(--brand); }
+
+  /* ---------- 播放器 ---------- */
+  .watch { display: grid; grid-template-columns: minmax(0,1fr) 280px; gap: 22px; }
+  .watch--mob { grid-template-columns: minmax(0,1fr); gap: 16px; }
+  .player { display: flex; flex-direction: column; gap: 12px; }
+  .screen { position: relative; aspect-ratio: 16/9; background: #0B0F14; border-radius: 18px; display: grid; place-items: center; }
+  .screen__hint { color: #5C6B82; font: 12px/1 var(--mono); }
+  .ptitle { font-size: 21px; font-weight: 600; }
+  .psub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .pbar { position: relative; height: 8px; border-radius: 999px; background: var(--sunken); }
+  .pbar__buf { position: absolute; inset: 0 auto 0 0; width: 62%; background: #C3D2E2; border-radius: inherit; }
+  .pbar__fill { position: absolute; inset: 0 auto 0 0; width: 38%; background: var(--brand); border-radius: inherit; }
+  .pbar__h { position: absolute; top: 50%; left: 38%; width: 14px; height: 14px; transform: translate(-50%,-50%); background: #fff; border: 3px solid var(--brand); border-radius: 50%; }
+  .ctrl { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; row-gap: 8px; }
+  .pbtn2 { position: relative; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 13px; color: var(--brand-ink); }
+  .time { position: relative; display: flex; align-items: center; gap: 2px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .spacer { flex: 1; min-width: 8px; }
+  .chip { position: relative; padding: 6px 12px; border-radius: 999px; font-size: 12px; color: var(--muted); background: #fff; border: 1px solid var(--hair); white-space: nowrap; }
+  .chip.on { color: var(--brand); background: var(--brand-soft); border-color: var(--brand); }
+
+  .pbody { display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 16px; align-items: start; }
+  .pbody--mob { grid-template-columns: minmax(0,1fr); }
+  .subs { display: flex; flex-direction: column; gap: 2px; }
+  .sent { position: relative; display: grid; grid-template-columns: 52px minmax(0,1fr); gap: 12px; padding: 10px 12px; border-radius: 9px; }
+  .sent.on { background: var(--brand-soft); }
+  .sent__t { font-family: var(--mono); font-size: 12px; color: var(--faint); padding-top: 3px; }
+  .sent__x { font-size: 15px; line-height: 1.75; }
+  .sent__x em { font-style: normal; border-bottom: 2px solid #C08A3E; color: #8A5A1E; }
+  .sent__tr { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .wcard { position: relative; padding: 16px; background: #fff; border: 1px solid var(--hair); border-radius: 18px; display: flex; flex-direction: column; gap: 8px; }
+  .wcard__h { display: flex; align-items: baseline; gap: 8px; }
+  .wcard__w { font-size: 21px; font-weight: 600; }
+  .wcard__ph { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .wcard__g { font-size: 13px; }
+  .wcard__c { font-size: 12px; color: var(--muted); }
+  .wcard__src { font-size: 12px; color: var(--faint); border-left: 2px solid var(--hair); padding-left: 8px; }
+
+  .side { display: flex; flex-direction: column; gap: 12px; }
+  .scard { position: relative; padding: 16px; background: #fff; border: 1px solid var(--hair); border-radius: 18px; display: flex; flex-direction: column; gap: 10px; }
+  .scard__t { font-size: 15px; font-weight: 600; }
+  .kv { display: flex; justify-content: space-between; font-size: 13px; }
+  .kv span:first-child { color: var(--muted); }
+  .key { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .kbd { font-family: var(--mono); font-size: 11px; padding: 3px 7px; border: 1px solid var(--hair); border-bottom-width: 2px; border-radius: 6px; background: var(--sunken); color: var(--muted); }
+
+  .nextrow { display: grid; gap: 12px; grid-template-columns: repeat(4, 1fr); }
+  .nextrow--mob { grid-template-columns: repeat(2, 1fr); }
+  .ncard { padding: 10px 12px; background: #fff; border: 1px solid var(--hair); border-radius: 13px; display: flex; flex-direction: column; gap: 4px; }
+  .ncard__t { font-size: 13px; font-weight: 500; }
+  .ncard__h { font-size: 12px; color: var(--muted); }
+
+  /* 底部标签栏 */
+  .tabbar { position: relative; display: grid; grid-template-columns: repeat(5, 1fr); background: #fff; border-top: 1px solid var(--hair); }
+  .tab { position: relative; min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 10px; color: var(--muted); }
+  .tab.on { color: var(--brand); }
+  .tab__i { display: grid; place-items: center; height: 22px; }
+
+  /* ---------- 图例 ---------- */
+  .legend { margin-top: 18px; display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 4px 24px; }
+  .li { display: grid; grid-template-columns: 22px minmax(0,1fr); gap: 10px; font-size: 13px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+  .li b { color: var(--ink); font-weight: 500; }
+  .li small { display: block; color: var(--ink-faint); font-family: var(--mono); font-size: 11.5px; margin-top: 2px; line-height: 1.5; }
+  .li small b { color: #C7D2E0; }
+  .n { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--mark); color: #fff; font: 600 11px/1 var(--mono); flex: none; margin-top: 2px; }
+
+  .foot { max-width: 1400px; margin: 64px auto 0; border-top: 1px solid var(--line); padding-top: 28px; }
+  .foot h2 { font-size: 17px; margin: 0 0 12px; }
+  .foot ul { margin: 0 0 18px; padding-left: 20px; color: var(--ink-dim); font-size: 13.5px; }
+  .foot li { margin-bottom: 8px; }
+  .foot b { color: var(--ink); font-weight: 500; }
+  .foot .warn { color: var(--ink-dim); font-size: 13px; border-left: 3px solid var(--mark); padding-left: 14px; }
+</style>
+</head>
+<body>
+
+<div class="head">
+  <h1>Eastudy V3 — 排版布局标注图（四屏）</h1>
+  <p>四个屏幕的排版结构、图标位置与尺寸标注。尺寸全部取自 <code>tokens.css</code> 与 <code>app.css</code>；图标形状取自 <code>src/ui/icons.js</code> 的同一批路径数据——图上这颗就是线上那颗。</p>
+  <p>红圈数字对应每块板子下方的图例。<b>顶栏那一排在顶栏正下方的标尺上</b>（顶栏只有 58px，编号压不住）。出图以数字标注为准，不要凭观感挪动位置。</p>
+</div>
+
+<div class="boards">
+
+<!-- ═════════════════════════ 1. 网页端 · 内容页 ═════════════════════════ -->
+<section class="board">
+  <div class="board__head">
+    <span class="board__n">S1</span>
+    <h2 class="board__title">网页端 · 内容页</h2>
+    <span class="board__size">设计稿 1440 × 900 · 断点 &gt; 1080px</span>
+  </div>
+  <p class="board__note">顶栏常驻五项导航 + 右侧四个动作钮。内容区居中，最大宽度 1240px。视频卡片四列自适应。图内画布按 1120px 等比示意，高位同比例压缩。</p>
+
+  <div class="stage">
+    <div class="wf wf--desk" style="height:830px">
+
+      <div class="tb">
+        <div class="brand"><span class="logo">E</span><span>Eastudy</span></div>
+        <nav class="tbnav"><span class="on">首页</span><span>视频库</span><span>计划</span><span>词汇</span><span>我的</span></nav>
+        <div class="tbright">
+          <span class="ibtn" data-i="search"></span>
+          <span class="vip">VIP</span>
+          <span class="ibtn" data-i="sun"></span>
+          <span class="ava">林</span>
+        </div>
+      </div>
+
+      <div class="ruler">
+        <span class="dot" style="left:30px">1</span>
+        <span class="dot" style="left:83px">2</span>
+        <span class="dot" style="left:158px">3</span>
+        <span class="dot" style="left:calc(100% - 166px)">4</span>
+        <span class="dot" style="left:calc(100% - 120px)">5</span>
+        <span class="dot" style="left:calc(100% - 74px)">6</span>
+        <span class="dot" style="left:calc(100% - 32px)">7</span>
+      </div>
+
+      <div class="out" style="max-width:1240px;margin:0 auto">
+        <div class="ttl">早上好，林同学</div>
+        <div class="sub">继续未完成的课程，或浏览最新上线的视频。</div>
+
+        <div class="blk blk--soft" style="height:40px;margin-top:16px;display:flex;align-items:center;padding:0 14px">
+          <span class="lbl">进度概览条 · 「今天 2 个 · 本周 5 个」　一条记录都没有时整条不画，不显示「0 个」</span>
+        </div>
+
+        <div class="resume" style="margin-top:16px">
+          <span class="dot dot--tl" style="left:-8px;top:-8px">8</span>
+          <span class="dot dot--tr">9</span>
+          <div class="thumb"><span class="pbtn" data-i="play"></span></div>
+          <div style="display:flex;flex-direction:column;gap:8px;min-width:0">
+            <span class="lbl">继续学习</span>
+            <div style="font-size:21px;font-weight:600">Unit 3 — 现在完成时</div>
+            <div style="font-size:13px;color:var(--muted)">已学 46% · 上次看到 6:12</div>
+            <div class="bar"><i></i></div>
+            <div style="margin-top:auto"><span class="cta">继续播放</span></div>
+          </div>
+        </div>
+
+        <div class="minirow">
+          <div class="mini"><span class="dot dot--tr">10</span><span>Unit 2 — 一般过去时</span><span class="lbl">已学 82%</span></div>
+          <div class="mini"><span>Unit 4 — 被动语态</span><span class="lbl">已学 31%</span></div>
+        </div>
+
+        <div class="grid" style="margin-top:22px">
+          <div class="vcard">
+            <span class="dot dot--tr">11</span>
+            <div class="vcard__cover"></div>
+            <div class="vcard__body">
+              <div class="vcard__t">Unit 5 — 情态动词</div>
+              <div class="vcard__s">中考语法精讲</div>
+              <div class="vcard__m"><span class="chip-s">中级</span><span class="lbl">12:40</span></div>
+              <div class="vcard__p"><i></i></div>
+            </div>
+          </div>
+          <div class="vcard"><div class="vcard__cover"></div><div class="vcard__body"><div class="vcard__t">Unit 6 — 定语从句</div><div class="vcard__s">中考语法精讲</div><div class="vcard__m"><span class="chip-s">中级</span><span class="lbl">15:08</span></div></div></div>
+          <div class="vcard"><div class="vcard__cover"></div><div class="vcard__body"><div class="vcard__t">Unit 7 — 虚拟语气</div><div class="vcard__s">高阶专题</div><div class="vcard__m"><span class="chip-s">高级</span><span class="lbl">18:22</span></div></div></div>
+          <div class="vcard"><div class="vcard__cover"></div><div class="vcard__body"><div class="vcard__t">Unit 8 — 非谓语动词</div><div class="vcard__s">高阶专题</div><div class="vcard__m"><span class="chip-s">高级</span><span class="lbl">21:05</span></div></div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="li"><span class="n">1</span><div><b>Logo 方块</b><small>28×28 · 圆角 13px · 距左 16px（移动端 12px）· 垂直居中</small></div></div>
+    <div class="li"><span class="n">2</span><div><b>品牌名「Eastudy」</b><small>紧随 Logo 右侧 8px · 15px/600 · ≤ 860px 时整块隐藏</small></div></div>
+    <div class="li"><span class="n">3</span><div><b>主导航第一项</b><small>5 项：首页·视频库·计划·词汇·我的 · 项内 8×14px · 项间 2px<br>当前项＝主色文字 + 主色浅底</small></div></div>
+    <div class="li"><span class="n">4</span><div><b>搜索按钮</b><small>44×44 · 放大镜线性图标 20px · <b>右组第 1 位</b></small></div></div>
+    <div class="li"><span class="n">5</span><div><b>VIP 徽标</b><small>padding 2×8px · 全圆角 · 12px/600 · <b>右组第 2 位</b><br>非会员时整格消失，不留空位</small></div></div>
+    <div class="li"><span class="n">6</span><div><b>主题按钮</b><small>44×44 · 图标 20px · 三态：太阳／月亮／烛火 · <b>右组第 3 位</b></small></div></div>
+    <div class="li"><span class="n">7</span><div><b>头像</b><small>32×32 圆形 · 昵称首字 13px/600 · 距右边缘 16px（移动端 12px）· <b>右组第 4 位</b></small></div></div>
+    <div class="li"><span class="n">8</span><div><b>主卡缩略图</b><small>320px 宽 · 16:9 · 圆角 13px · 中央 46px 白色半透明播放圆钮</small></div></div>
+    <div class="li"><span class="n">9</span><div><b>继续播放 CTA</b><small>主卡右下角 · padding 9×18px · 圆角 13px · 实心主色 · 14px/500</small></div></div>
+    <div class="li"><span class="n">10</span><div><b>次级入口</b><small>一行两张 · flex 1 1 220px · 最小高 44px · 13px 文字 + 12px 灰色进度</small></div></div>
+    <div class="li"><span class="n">11</span><div><b>视频卡片</b><small>18px 圆角 · 封面 16:9 → 15px 标题（两行截断）→ 12px 副标题（一行截断）→ 难度胶囊 + 等宽时长 → 未看完时 3px 主色进度条</small></div></div>
+  </div>
+</section>
+
+<!-- ═════════════════════════ 2. 网页端 · 播放器 ═════════════════════════ -->
+<section class="board">
+  <div class="board__head">
+    <span class="board__n">S2</span>
+    <h2 class="board__title">网页端 · 播放器</h2>
+    <span class="board__size">设计稿 1440 × 900 · 断点 &gt; 1080px</span>
+  </div>
+  <p class="board__note">左主区 + 右 280px 侧栏。播放器内部再分两列：字幕流 + 300px 生词卡。控制条分两组——<b>左边「回退 · 播放 · 前进 · 时间码」，右边五颗胶囊，中间刻意留空</b>。侧栏与生词卡滚动时吸附在顶栏下方。</p>
+
+  <div class="stage">
+    <div class="wf wf--desk" style="height:1060px">
+      <div class="tb">
+        <div class="brand"><span class="logo">E</span><span>Eastudy</span></div>
+        <nav class="tbnav"><span>首页</span><span class="on">视频库</span><span>计划</span><span>词汇</span><span>我的</span></nav>
+        <div class="tbright">
+          <span class="ibtn" data-i="search"></span>
+          <span class="vip">VIP</span>
+          <span class="ibtn" data-i="moon"></span>
+          <span class="ava">林</span>
+        </div>
+      </div>
+
+      <div class="ruler">
+        <span class="dot" style="left:calc(100% - 166px)">1</span>
+        <span class="dot" style="left:calc(100% - 120px)">2</span>
+        <span class="dot" style="left:calc(100% - 74px)">3</span>
+        <span class="dot" style="left:calc(100% - 32px)">4</span>
+      </div>
+
+      <div class="out out--flush" style="max-width:1240px;margin:0 auto">
+        <div class="watch">
+
+          <div class="player">
+            <div class="screen">
+              <span class="dot dot--in">5</span>
+              <span class="screen__hint">16:9 视频区 · 圆角 18px · 任何主题下恒为黑底</span>
+            </div>
+
+            <div style="position:relative">
+              <span class="dot dot--tl">6</span>
+              <div class="ptitle">Unit 3 — 现在完成时</div>
+              <div class="psub">中考语法精讲 · 中级</div>
+            </div>
+
+            <div class="pbar">
+              <div class="pbar__buf"></div><div class="pbar__fill"></div><div class="pbar__h"></div>
+              <span class="dot dot--tr" style="right:-6px;top:-9px">7</span>
+            </div>
+
+            <div class="ctrl">
+              <span class="pbtn2" data-i="arrowLeft"><span class="dot dot--tl">8</span></span>
+              <span class="pbtn2" data-i="play"><span class="dot dot--tl">9</span></span>
+              <span class="pbtn2" data-i="arrowRight"><span class="dot dot--tl">10</span></span>
+              <span class="time">6:12&nbsp;/&nbsp;13:40<span class="dot dot--tl">11</span></span>
+              <span class="spacer"></span>
+              <span class="chip">1x</span>
+              <span class="chip on">单句循环<span class="dot dot--tl">12</span></span>
+              <span class="chip">跟读</span><span class="chip">盲听</span><span class="chip">挖空</span>
+            </div>
+
+            <div class="pbody">
+              <div class="subs">
+                <div class="lbl" style="padding:0 12px 6px">字幕流 · 左列 · 最高 420px，超出滚动</div>
+                <div class="sent" style="position:relative"><span class="dot dot--tl">13</span><span class="sent__t">0:04</span><div><div class="sent__x">I <em>have lived</em> here for five years.</div><div class="sent__tr">我在这里住了五年了。</div></div></div>
+                <div class="sent on"><span class="sent__t">0:11</span><div><div class="sent__x">She has <em>already finished</em> her homework.</div><div class="sent__tr">她已经写完作业了。</div></div></div>
+                <div class="sent"><span class="sent__t">0:18</span><div><div class="sent__x">They have been friends since 2010.</div><div class="sent__tr">他们从 2010 年起就是朋友。</div></div></div>
+                <div class="sent"><span class="sent__t">0:25</span><div><div class="sent__x">We haven't seen him for a long time.</div><div class="sent__tr">我们很久没见过他了。</div></div></div>
+              </div>
+
+              <div class="wcard">
+                <span class="dot dot--tl">14</span>
+                <div class="wcard__h"><span class="wcard__w">already</span><span class="wcard__ph">/ɔːlˈredi/</span></div>
+                <div class="wcard__g">adv. 已经</div>
+                <div class="wcard__c">She has already finished her homework.</div>
+                <div class="wcard__src">出现在 0:11</div>
+                <div style="display:flex;gap:6px;margin-top:4px"><span class="chip on">已收藏</span><span class="chip">加入生词本</span></div>
+              </div>
+            </div>
+          </div>
+
+          <aside class="side">
+            <div class="scard">
+              <span class="dot dot--tl">15</span>
+              <div class="scard__t">本课信息</div>
+              <div class="kv"><span>难度</span><span>中级</span></div>
+              <div class="kv"><span>分类</span><span>中考语法</span></div>
+              <div class="kv"><span>学习进度</span><span>46%</span></div>
+            </div>
+            <div class="scard">
+              <span class="dot dot--tl">16</span>
+              <div class="scard__t">快捷键</div>
+              <div class="key"><span class="kbd">空格</span><span>播放 / 暂停</span></div>
+              <div class="key"><span class="kbd">←</span><span>后退 5 秒</span></div>
+              <div class="key"><span class="kbd">→</span><span>前进 5 秒</span></div>
+            </div>
+            <div class="scard">
+              <span class="dot dot--tl">17</span>
+              <div class="scard__t">接下来看</div>
+              <div class="nextrow nextrow--mob" style="grid-template-columns:1fr 1fr">
+                <div class="ncard"><div class="ncard__t">Unit 4 — 被动语态</div><div class="ncard__h">下一课</div></div>
+                <div class="ncard"><div class="ncard__t">Unit 2 — 一般过去时</div><div class="ncard__h">已学 82%</div></div>
+              </div>
+            </div>
+          </aside>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="li"><span class="n">1</span><div><b>搜索</b><small>44×44 · 顶栏右组第 1 位（四个位置与内容页完全一致）</small></div></div>
+    <div class="li"><span class="n">2</span><div><b>VIP 徽标</b><small>右组第 2 位</small></div></div>
+    <div class="li"><span class="n">3</span><div><b>主题按钮</b><small>右组第 3 位 · 图示为深色态（月亮）</small></div></div>
+    <div class="li"><span class="n">4</span><div><b>头像</b><small>右组第 4 位 · 贴右边缘</small></div></div>
+    <div class="li"><span class="n">5</span><div><b>视频舞台</b><small>16:9 · 圆角 18px · 恒黑底，不随主题变<br>理由：浅色底 + 明亮画面会洗掉字幕对比度</small></div></div>
+    <div class="li"><span class="n">6</span><div><b>标题 / 副标题</b><small>21px/600 + 13px 次要色 · 左对齐贴舞台左缘</small></div></div>
+    <div class="li"><span class="n">7</span><div><b>进度条</b><small>高 8px 全圆角 · 三层：下沉灰底 → 强描边灰缓冲 → 主色填充<br>拖拽圆点 14px（白底 + 3px 主色描边），<b>仅悬停/键盘聚焦时显形</b></small></div></div>
+    <div class="li"><span class="n">8</span><div><b>后退 5 秒</b><small>44×44 · 主控组第 1 位</small></div></div>
+    <div class="li"><span class="n">9</span><div><b>播放 / 暂停</b><small>44×44 · 主控组第 2 位 · 整行唯一的实心图标</small></div></div>
+    <div class="li"><span class="n">10</span><div><b>前进 5 秒</b><small>44×44 · 主控组第 3 位</small></div></div>
+    <div class="li"><span class="n">11</span><div><b>时间码</b><small>等宽 12px 次要色 · 主控组第 4 位 · 形如 6:12 / 13:40</small></div></div>
+    <div class="li"><span class="n">12</span><div><b>五颗胶囊 · 右侧组</b><small>顺序固定：1x → 单句循环 → 跟读 → 盲听 → 挖空<br>padding 6×12px · 12px 字 · 全圆角 · 由弹性空隙推到最右<br>激活态＝主色文字 + 主色浅底 + 主色描边</small></div></div>
+    <div class="li"><span class="n">13</span><div><b>字幕行</b><small>时间列 52px + 正文列，行内 10×12px<br>英文 15px / 行高 1.75（衬线）· 中文翻译 12px 次要色另起一行<br>当前句＝主色浅底；生词＝褐色字 + 2px 琥珀下划线</small></div></div>
+    <div class="li"><span class="n">14</span><div><b>生词卡</b><small>300px 固定 · 18px 圆角 · 白底 · 吸附<br>词形 21px/600 → 音标等宽 12px → 释义 13px → 例句 12px → 来源（2px 竖线 + 「出现在 0:11」）→ 两颗胶囊</small></div></div>
+    <div class="li"><span class="n">15</span><div><b>本课信息卡</b><small>右栏 280px 第 1 张 · 三行左右对齐：难度 / 分类 / 学习进度</small></div></div>
+    <div class="li"><span class="n">16</span><div><b>快捷键卡</b><small>右栏第 2 张 · 三行＝键帽方块 + 说明（空格 / ← / →）</small></div></div>
+    <div class="li"><span class="n">17</span><div><b>接下来看</b><small>右栏第 3 张 · 最多 4 张子卡 · 13px 标题 + 12px 提示（下一课 / 已学 82% / 未开始）</small></div></div>
+  </div>
+</section>
+
+<!-- ═════════════════════════ 3. 移动端 · 内容页 ═════════════════════════ -->
+<section class="board">
+  <div class="board__head">
+    <span class="board__n">S3</span>
+    <h2 class="board__title">移动端 · 内容页</h2>
+    <span class="board__size">390 × 844 · 断点 ≤ 860px</span>
+  </div>
+  <p class="board__note">顶栏只留 Logo 与右侧四件——<b>横向导航整块换到底部标签栏，品牌名也一起隐藏</b>（宽度不够时先砍文字，再砍功能）。内容区左右内边距收到 12px，底部留 92px 给标签栏和安全区。</p>
+
+  <div class="stage">
+    <div class="wf wf--mob" style="height:800px">
+
+      <div class="tb tb--mob">
+        <div class="brand"><span class="logo">E</span></div>
+        <div class="tbright">
+          <span class="ibtn" data-i="search"></span>
+          <span class="vip">VIP</span>
+          <span class="ibtn" data-i="flame"></span>
+          <span class="ava">林</span>
+        </div>
+      </div>
+
+      <div class="ruler">
+        <span class="dot" style="left:26px">1</span>
+        <span class="dot" style="left:calc(100% - 162px)">2</span>
+        <span class="dot" style="left:calc(100% - 116px)">3</span>
+        <span class="dot" style="left:calc(100% - 70px)">4</span>
+        <span class="dot" style="left:calc(100% - 28px)">5</span>
+      </div>
+
+      <div class="out out--mob" style="flex:1;min-height:0;overflow:hidden">
+        <div class="ttl ttl--mob">早上好，林同学</div>
+        <div class="sub sub--mob">继续未完成的课程，或浏览最新上线的视频。</div>
+
+        <div class="blk blk--soft" style="height:36px;margin-top:12px;display:flex;align-items:center;padding:0 12px">
+          <span class="lbl">进度概览条</span>
+        </div>
+
+        <div class="resume resume--mob" style="margin-top:12px;padding:12px">
+          <span class="dot dot--tl">6</span>
+          <div class="thumb"><span class="pbtn" data-i="play"></span></div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="font-size:17px;font-weight:600">Unit 3 — 现在完成时</div>
+            <div style="font-size:12px;color:var(--muted)">已学 46% · 上次看到 6:12</div>
+            <div class="bar"><i></i></div>
+            <div style="margin-top:4px"><span class="cta" style="font-size:13px;padding:8px 14px">继续播放</span></div>
+          </div>
+        </div>
+
+        <div class="grid grid--mob" style="margin-top:16px">
+          <div class="vcard"><div class="vcard__cover"></div><div class="vcard__body"><div class="vcard__t" style="font-size:13px">Unit 4 — 被动语态</div><div class="vcard__s">12:40</div></div></div>
+          <div class="vcard"><div class="vcard__cover"></div><div class="vcard__body"><div class="vcard__t" style="font-size:13px">Unit 5 — 情态动词</div><div class="vcard__s">15:08</div></div></div>
+        </div>
+      </div>
+
+      <div class="tabbar">
+        <span class="tab on"><span class="dot" style="top:-9px;left:50%;margin-left:-9px">7</span><span class="tab__i" data-i="home"></span>首页</span>
+        <span class="tab"><span class="tab__i" data-i="library"></span>视频库</span>
+        <span class="tab"><span class="tab__i" data-i="plan"></span>计划</span>
+        <span class="tab"><span class="tab__i" data-i="vocabulary"></span>词汇</span>
+        <span class="tab"><span class="dot" style="top:-9px;left:50%;margin-left:-9px">8</span><span class="tab__i" data-i="account"></span>我的</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="li"><span class="n">1</span><div><b>Logo</b><small>28×28 · 距左 12px · <b>品牌名在此断点隐藏</b></small></div></div>
+    <div class="li"><span class="n">2</span><div><b>搜索按钮</b><small>44×44 · 右组第 1 位</small></div></div>
+    <div class="li"><span class="n">3</span><div><b>VIP 徽标</b><small>右组第 2 位 · 仅会员出现</small></div></div>
+    <div class="li"><span class="n">4</span><div><b>主题按钮</b><small>44×44 · 右组第 3 位 · 图示为暖色态（烛火）</small></div></div>
+    <div class="li"><span class="n">5</span><div><b>头像</b><small>32×32 圆形 · 右组第 4 位 · 距右边缘 12px</small></div></div>
+    <div class="li"><span class="n">6</span><div><b>主卡窄屏态</b><small>单列堆叠：缩略图在上、正文在下 · 内边距 12px · 标题降到 17px</small></div></div>
+    <div class="li"><span class="n">7</span><div><b>底部标签栏（整体）</b><small>固定贴底 · 5 等分 · 每项最小高 52px · 白底 + 顶部 1px 描边<br>下沿叠加 safe-area-inset-bottom，否则 iPhone 上被 Home 条压住</small></div></div>
+    <div class="li"><span class="n">8</span><div><b>单项内部结构</b><small>线性图标 22px 在上、10px 文字在下，间距 2px<br>描边走 currentColor，当前项主色 —— 换色不需要第二套资源</small></div></div>
+  </div>
+</section>
+
+<!-- ═════════════════════════ 4. 移动端 · 播放器 ═════════════════════════ -->
+<section class="board">
+  <div class="board__head">
+    <span class="board__n">S4</span>
+    <h2 class="board__title">移动端 · 播放器</h2>
+    <span class="board__size">390 × 844 · 断点 ≤ 860px</span>
+  </div>
+  <p class="board__note">播放器内部两列塌成一列：字幕流在上、生词卡跟到下面（不再吸附、宽度 100%）。控制条允许换行——<b>五颗胶囊折到第二行，主控三颗 + 时间码留在第一行</b>。强行挤成一行会把每颗胶囊压到读不清。</p>
+
+  <div class="stage">
+    <div class="wf wf--mob" style="height:800px">
+
+      <div class="tb tb--mob">
+        <div class="brand"><span class="logo">E</span></div>
+        <div class="tbright">
+          <span class="ibtn" data-i="search"></span>
+          <span class="vip">VIP</span>
+          <span class="ibtn" data-i="sun"></span>
+          <span class="ava">林</span>
+        </div>
+      </div>
+
+      <div class="ruler">
+        <span class="dot" style="left:calc(100% - 162px)">1</span>
+        <span class="dot" style="left:calc(100% - 116px)">2</span>
+        <span class="dot" style="left:calc(100% - 70px)">3</span>
+        <span class="dot" style="left:calc(100% - 28px)">4</span>
+      </div>
+
+      <div class="out out--mob" style="flex:1;min-height:0;overflow:hidden">
+        <div class="player">
+          <div class="screen">
+            <span class="dot dot--in">5</span>
+            <span class="screen__hint">16:9 · 圆角 18px</span>
+          </div>
+
+          <div style="position:relative">
+            <span class="dot dot--tl">6</span>
+            <div class="ptitle" style="font-size:17px">Unit 3 — 现在完成时</div>
+            <div class="psub">中考语法精讲 · 中级</div>
+          </div>
+
+          <div class="pbar">
+            <div class="pbar__buf"></div><div class="pbar__fill"></div><div class="pbar__h"></div>
+            <span class="dot dot--tr" style="right:-6px;top:-9px">7</span>
+          </div>
+
+          <div class="ctrl">
+            <span class="pbtn2" data-i="arrowLeft"><span class="dot dot--tl">8</span></span>
+            <span class="pbtn2" data-i="play"><span class="dot dot--tl">9</span></span>
+            <span class="pbtn2" data-i="arrowRight"><span class="dot dot--tl">10</span></span>
+            <span class="time">6:12&nbsp;/&nbsp;13:40<span class="dot dot--tl">11</span></span>
+            <span class="spacer" style="flex-basis:100%"></span>
+            <span class="chip">1x</span><span class="chip on">单句循环<span class="dot dot--tl">12</span></span><span class="chip">跟读</span><span class="chip">盲听</span><span class="chip">挖空</span>
+          </div>
+
+          <div class="pbody pbody--mob" style="margin-top:4px">
+            <div class="subs">
+              <div class="lbl" style="padding:0 12px 6px">字幕流 · 单列 · 最高 420px 后滚动</div>
+              <div class="sent on" style="position:relative"><span class="dot dot--tl">13</span><span class="sent__t">0:11</span><div><div class="sent__x" style="font-size:14px">She has <em>already finished</em> her homework.</div><div class="sent__tr">她已经写完作业了。</div></div></div>
+              <div class="sent"><span class="sent__t">0:18</span><div><div class="sent__x" style="font-size:14px">They have been friends since 2010.</div><div class="sent__tr">他们从 2010 年起就是朋友。</div></div></div>
+            </div>
+
+            <div class="wcard">
+              <span class="dot dot--tl">14</span>
+              <div class="wcard__h"><span class="wcard__w" style="font-size:18px">already</span><span class="wcard__ph">/ɔːlˈredi/</span></div>
+              <div class="wcard__g">adv. 已经</div>
+              <div class="wcard__c">She has already finished her homework.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabbar">
+        <span class="tab"><span class="tab__i" data-i="home"></span>首页</span>
+        <span class="tab"><span class="tab__i" data-i="library"></span>视频库</span>
+        <span class="tab"><span class="tab__i" data-i="plan"></span>计划</span>
+        <span class="tab"><span class="tab__i" data-i="vocabulary"></span>词汇</span>
+        <span class="tab on"><span class="dot" style="top:-9px;left:50%;margin-left:-9px">15</span><span class="tab__i" data-i="account"></span>我的</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="li"><span class="n">1</span><div><b>搜索按钮</b><small>44×44 · 顶栏右组第 1 位（四个位置与内容页、桌面端完全一致）</small></div></div>
+    <div class="li"><span class="n">2</span><div><b>VIP 徽标</b><small>右组第 2 位</small></div></div>
+    <div class="li"><span class="n">3</span><div><b>主题按钮</b><small>44×44 · 右组第 3 位 · 图示为浅色态（太阳）</small></div></div>
+    <div class="li"><span class="n">4</span><div><b>头像</b><small>32×32 圆形 · 右组第 4 位</small></div></div>
+    <div class="li"><span class="n">5</span><div><b>视频舞台</b><small>16:9 · 圆角 18px · 左右各留 12px 内容边距</small></div></div>
+    <div class="li"><span class="n">6</span><div><b>标题 / 副标题</b><small>窄屏标题 17–21px · 副标题 13px 次要色</small></div></div>
+    <div class="li"><span class="n">7</span><div><b>进度条</b><small>高 8px · 拖拽圆点 14px · 触屏上没有悬停，热区要撑满 44px</small></div></div>
+    <div class="li"><span class="n">8</span><div><b>后退 5 秒</b><small>44×44 · 第一行第 1 位</small></div></div>
+    <div class="li"><span class="n">9</span><div><b>播放 / 暂停</b><small>44×44 · 第一行第 2 位 · 实心三角</small></div></div>
+    <div class="li"><span class="n">10</span><div><b>前进 5 秒</b><small>44×44 · 第一行第 3 位</small></div></div>
+    <div class="li"><span class="n">11</span><div><b>时间码</b><small>紧跟主控右侧 · 等宽 12px · <b>不要换到第二行</b></small></div></div>
+    <div class="li"><span class="n">12</span><div><b>五颗胶囊 · 换行态</b><small>顺序不变：1x → 单句循环 → 跟读 → 盲听 → 挖空<br>整组折到第二行，<b>左对齐</b>，「单句循环」为激活态</small></div></div>
+    <div class="li"><span class="n">13</span><div><b>字幕行</b><small>结构与桌面端一致，正文字号降到 14px<br>时间列仍 52px · 当前句主色浅底</small></div></div>
+    <div class="li"><span class="n">14</span><div><b>生词卡通栏态</b><small>宽度 100% · 不再吸附 · 排在字幕流下方 · 词形降到 18px</small></div></div>
+    <div class="li"><span class="n">15</span><div><b>标签栏高亮项</b><small>播放中「视频库」项为主色（图示画成「我的」是为了让 15 号落在同一处）<br>实际运行时跟随当前路由</small></div></div>
+  </div>
+</section>
+
+</div>
+
+<div class="foot">
+  <h2>出图前必须守住的三条</h2>
+  <ul>
+    <li><b>顶栏右侧四个元素的顺序不许动</b>：搜索 → VIP → 主题 → 头像。这是视线与拇指的固定路径，换一次顺序，老用户就要重新找一遍。</li>
+    <li><b>控制条的分组不许动</b>：左边「回退 · 播放 · 前进 · 时间码」一组，右边五颗胶囊一组，中间那片空白是设计的一部分。混成等距的一排，播放键就不再是视觉焦点。</li>
+    <li><b>图标一律 24×24 网格、2px 描边、圆角端点的线性图标；只有播放键是实心。</b>混用实心与线框，某颗会在 18px 下糊成一团，或者看起来比别的重。</li>
+  </ul>
+  <p class="warn">
+    另注：代码里播放器那三颗目前还是<b>字符字形</b>（<code>▶ ❚❚ « »</code>），标签栏已经换成上面这套线性图标了。
+    <b>出图时请直接按线性图标画</b>——代码这边会跟上，把播放器也切过去。
+  </p>
+</div>
+
+<script>
+/* 把 icons.js 里的路径数据原样搬过来画图标:图上这颗就是线上那颗, 不用
+   近似替代品。这份文件不进构建, 所以这里手工同步一份是可接受的代价。 */
+const BOX = '0 0 24 24';
+const PATHS = {
+  home: 'M3 10.5 12 3.5l9 7M5.5 9.5V20h13V9.5',
+  library: 'M4 5.5h6.5v13H4zM13.5 5.5H20v13h-6.5z',
+  plan: 'M12 7v5l3.5 2M12 3.5a8.5 8.5 0 1 1 0 17 8.5 8.5 0 0 1 0-17Z',
+  vocabulary: 'M4 19.5c0-2 2-3 4-3s4 1 4 3M8 13a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7M15 6.5h5M15 10h5M15 13.5h3',
+  account: 'M12 12.5a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM5 20.5c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5',
+  search: 'M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14ZM20 20l-4-4',
+  sun: 'M12 16.5a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9ZM12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.2 5.2l1.4 1.4M17.4 17.4l1.4 1.4M18.8 5.2l-1.4 1.4M6.6 17.4l-1.4 1.4',
+  moon: 'M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z',
+  flame: 'M12 21c3.3 0 6-2.4 6-5.6 0-3.8-3.4-5.3-3.4-8.4 0-.7.2-1.5.6-2.2-2.6.7-4.4 2.6-4.4 5 0 1 .3 1.8.8 2.5-1.4-.4-2.3-1.6-2.3-3-1.2 1.3-1.9 3-1.9 4.9C7.4 18.4 9.5 21 12 21Z',
+  play: 'M8 5.5v13l10-6.5z',
+  arrowLeft: 'M15 5l-7 7 7 7',
+  arrowRight: 'M9 5l7 7-7 7',
+};
+const FILLED = new Set(['play']);
+
+function svg(name, size) {
+  const p = PATHS[name];
+  if (!p) return '';
+  const filled = FILLED.has(name);
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${BOX}" width="${size}" height="${size}"`
+    + ` fill="${filled ? 'currentColor' : 'none'}"`
+    + (filled ? '' : ' stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"')
+    + ` aria-hidden="true" focusable="false"><path d="${p}"/></svg>`;
+}
+
+/* 编号徽章是这些元素的子节点, 所以父元素必须有定位上下文 —— 只给真正
+   带角标的元素加, 别全局加(全局加会让每一个 flex 子项都变成包含块)。 */
+for (const host of document.querySelectorAll('[data-i]')) {
+  const isTab = host.classList.contains('tab__i');
+  const isPbtn = host.classList.contains('pbtn');
+  host.innerHTML = svg(host.dataset.i, isTab ? 22 : isPbtn ? 18 : 20);
+}
+</script>
+</body>
+</html>

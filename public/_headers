@@ -1,0 +1,65 @@
+# Eastudy V3 — response headers.
+#
+# Security headers belong here rather than in the Functions: `_headers` is
+# applied by the edge to static responses too, and a header set only in a
+# handler is missing on exactly the responses that never reach one (the HTML
+# shell, the CSS, the vendored scripts).
+
+/*
+  # The shell is HTML with an inline theme-paint script, so `script-src` needs
+  # the two hashes below. Everything else is a same-origin file with a stable
+  # path: the vendored hls.js/supabase.js, and the two bundles.
+  #
+  # TWO hashes, one per shell, and they are NOT interchangeable:
+  #   b8YQ+JFYCSNsVQS5ddhHSyo4W5u36t+KxSo3Rn8XP9E=  → index.html        (学员端)
+  #   Ci0+e8EXY9UIG6B0lPsjBNbhTejQyXRSfLCYoJHHIao=  → admin/index.html  (控制端)
+  #
+  # Only the admin hash was listed, so the student shell's pre-paint was blocked
+  # on every load — the page painted with :root's default theme and then jumped
+  # to the stored one once theme.js ran. A flash of the wrong theme on the
+  # surface learners open most often.
+  #
+  # These are hand-maintained and no build step recomputes them. **Edit either
+  # inline script and you must recompute its hash here**, or that shell silently
+  # loses its pre-paint again. Recompute with:
+  #
+  #   node -e "const c=require('crypto'),f=require('fs');\
+  #     const m=/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g.exec(f.readFileSync('public/index.html','utf8'));\
+  #     console.log('sha256-'+c.createHash('sha256').update(m[1],'utf8').digest('base64'))"
+  #
+  # (swap the path for public/admin/index.html to get the other one)
+  #
+  # 'unsafe-inline' is deliberately absent for script-src. The inline scripts in
+  # index.html and admin/index.html are the theme pre-paint, and they are the
+  # only inline scripts in the project — if a third one appears, this policy will
+  # block it and the fix is to move it into a module, not to add the keyword.
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-b8YQ+JFYCSNsVQS5ddhHSyo4W5u36t+KxSo3Rn8XP9E=' 'sha256-Ci0+e8EXY9UIG6B0lPsjBNbhTejQyXRSfLCYoJHHIao='; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; media-src 'self' blob: https:; connect-src 'self' https: http://127.0.0.1:8790; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+
+# The two HTML shells must never be cached: they name the bundle files, and a
+# cached shell keeps asking for the previous build's hashed chunk names after a
+# deploy, which surfaces as a chunk-load error on a fresh page load.
+/
+  Cache-Control: no-cache, must-revalidate
+
+/admin/
+  Cache-Control: no-cache, must-revalidate
+  X-Robots-Tag: noindex, nofollow
+
+# env.js is rewritten per deployment, so it must not be cached either — a stale
+# copy points the app at the previous Supabase project.
+/env.js
+  Cache-Control: no-store
+
+# Bundle output is content-addressed by esbuild's hashes on chunks, but the
+# entry filenames are stable (app.js, admin/admin.js), so they get a short TTL
+# rather than an immutable one. The hashes live in the chunk names.
+/assets/*
+  Cache-Control: public, max-age=300
+
+/assets/vendor/*
+  Cache-Control: public, max-age=31536000, immutable

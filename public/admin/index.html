@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#1F3A55">
+  <title>Eastudy 控制端</title>
+  <!-- Control-end pages must never be indexed. -->
+  <meta name="robots" content="noindex, nofollow">
+
+  <link rel="stylesheet" href="/assets/tokens.css">
+  <link rel="stylesheet" href="/assets/admin.css">
+
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem('eastudy.v3.theme');
+        var resolved = stored === 'dark' || stored === 'light'
+          ? stored
+          : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.dataset.theme = resolved;
+        document.documentElement.style.colorScheme = resolved;
+      } catch (e) { /* private mode */ }
+    })();
+  </script>
+</head>
+<body class="admin-body">
+  <div id="app">
+    <div class="boot" role="status" aria-live="polite">
+      <span class="boot__logo" aria-hidden="true">E</span>
+      <p class="boot__text">正在加载控制端…</p>
+    </div>
+  </div>
+
+  <noscript>
+    <div class="fatal">
+      <h1>需要启用 JavaScript</h1>
+      <p>控制端依赖 JavaScript,请在浏览器设置中开启后重试。</p>
+    </div>
+  </noscript>
+
+  <!-- Same two blocking classic scripts as the student shell, and for the same
+       reason: `env.js` sets the global the app reads at import time, and the
+       vendored supabase-js UMD build defines `globalThis.supabase` before the
+       module graph touches it. The control end has no player, so no hls.js. -->
+  <script src="/env.js"></script>
+  <script src="/assets/vendor/supabase.js"></script>
+
+  <script type="module" src="/admin/admin.js"></script>
+</body>
+</html>

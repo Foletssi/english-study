@@ -1,0 +1,403 @@
+/* ==========================================================================
+   Eastudy — 12 套主题配色（Light / Dark）
+
+   来源：Eastudy_12主题配色与前端复刻规范.docx 第 2 节「12 套生产主题总表」
+   以及其后每套主题的逐 token 表。色值是**手工誊抄**该文档的生产版数值，
+   不从 PNG 视觉稿里吸色 —— 规范第 1 节明确写了「生成图会有模型颜色漂移，
+   因此前端不要从 PNG 再吸色；以 themes-12-production.css / themes.json 为准」。
+
+   关于 theme-02 / theme-05：规范第 1 节说明「你后续明确要求不使用粉色、
+   粉紫，因此生产版将原 theme-02、theme-05 替换为非粉紫方案；旧值只做兼容
+   归档」。另一份文档《12套网页主题配色与组件复用规范.docx》里这两套还是
+   旧的雾紫灰 / 梅子酒紫，已作废，不要照抄那一份。
+
+   --------------------------------------------------------------------------
+   三层结构（规范第 1 节要求的分层）
+
+     第一层  原始色值    —— 下面每个 [data-theme=...] 块里的字面 HEX
+     第二层  语义 Token  —— 每个块只写 9 个语义名：page-bg / card-bg /
+                            panel-bg / border / text / text-muted /
+                            primary / primary-soft / highlight
+     第三层  组件 Token  —— 文件末尾「映射到既有 token 名」那一段，
+                            把第二层转成 app.css / admin.css 已经在用的
+                            --bg / --surface / --fg / --border / --accent ...
+
+   分这层是为了改一处不动全身：换主题只换第一、二层，组件 CSS（app.css）
+   里没有任何一行颜色是写死的，也没有任何一行需要按主题复制 12 份。
+
+   --------------------------------------------------------------------------
+   两个属性，各管一件事（规范 5.2 / 7）
+
+     data-theme="theme-01"     …… 哪一套色系
+     data-mode="light|dark"    …… 这一套色系的浅色版还是深色版
+
+   两者正交：12 × 2 = 24 种外观，但仍然只有一份组件 CSS。
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   默认值：theme-01 · 鼠尾草绿 · Light
+   没有任何属性时（首帧、JS 未执行、邮件客户端）落到这里，而不是落进一片白。
+   -------------------------------------------------------------------------- */
+:root,
+html[data-theme="theme-01"][data-mode="light"] {
+  --page-bg:      #F6F8F3;
+  --card-bg:      #FFFFFC;
+  --panel-bg:     #EAF1E8;
+  --border-base:  #D3DED0;
+  --fg-base:    #1F3127;
+  --fg-subtle:  #708276;
+  --primary:      #4E7560;
+  --primary-soft: #DFEADF;
+  --highlight:    #D0A62C;
+  /* primary 的 hover 与 on- 不在规范的 9 个 token 里，但组件需要一个悬停色
+     和一个压在主色上的文字色。这两个由 primary 派生而不是逐主题手填：
+     手填 24 份必然有抄错的，派生至少不会出现某套主题的按钮 hover 变成别的色系。*/
+  --primary-hover: color-mix(in oklab, var(--primary) 86%, #000);
+  --on-primary:    #FFFFFF;
+  --highlight-soft: color-mix(in oklab, var(--highlight) 18%, var(--page-bg));
+}
+
+/* --------------------------------------------------------------------------
+   01–12 各套的深色版
+   -------------------------------------------------------------------------- */
+
+html[data-theme="theme-01"][data-mode="dark"] {
+  --page-bg: #13251B;  --card-bg: #1B3024;  --panel-bg: #294537;
+  --border-base: #476252;  --fg-base: #F3F7F2;  --fg-subtle: #B2C2B6;
+  --primary: #9BD3AA;  --primary-soft: #2D513C;  --highlight: #E6C85A;
+  --on-primary: #183223;
+}
+
+/* 02 · 柔雾蓝灰 · 温柔知性
+   注意：生产版已替换旧「雾紫灰」。紫灰那套（#746AA0 / #2D2A45）作废。 */
+html[data-theme="theme-02"][data-mode="light"] {
+  --page-bg: #F6F8F9;  --card-bg: #FFFFFF;  --panel-bg: #EAF0F2;
+  --border-base: #D3DEE2;  --fg-base: #243A46;  --fg-subtle: #71828A;
+  --primary: #5C7D89;  --primary-soft: #E1EAED;  --highlight: #9DB5BE;
+  --on-primary: #FFFFFF;
+}
+html[data-theme="theme-02"][data-mode="dark"] {
+  --page-bg: #1B2A31;  --card-bg: #243740;  --panel-bg: #304852;
+  --border-base: #4B646D;  --fg-base: #F4F8F9;  --fg-subtle: #BAC7CC;
+  --primary: #8FB8C3;  --primary-soft: #3A555F;  --highlight: #B7CDD3;
+  --on-primary: #1B2A31;
+}
+
+/* 03 · 孔雀蓝绿 · 优雅清透 —— 规范里点名「适合播放/听力交互」 */
+html[data-theme="theme-03"][data-mode="light"] {
+  --page-bg: #F3FAFA;  --card-bg: #FFFFFF;  --panel-bg: #E3F4F3;
+  --border-base: #C5E1DF;  --fg-base: #0E3E42;  --fg-subtle: #638184;
+  --primary: #0A7076;  --primary-soft: #D4F1EF;  --highlight: #21B8C4;
+  --on-primary: #FFFFFF;
+}
+html[data-theme="theme-03"][data-mode="dark"] {
+  --page-bg: #052F35;  --card-bg: #073D44;  --panel-bg: #0B5058;
+  --border-base: #26717A;  --fg-base: #F0FCFC;  --fg-subtle: #A8C9CB;
+  --primary: #42D6D6;  --primary-soft: #0D5C62;  --highlight: #27C5D4;
+  --on-primary: #063A3F;
+}
+
+/* 04 · 香槟米杏 · 柔和高级 */
+html[data-theme="theme-04"][data-mode="light"] {
+  --page-bg: #FAF7F1;  --card-bg: #FFFDF8;  --panel-bg: #F4EADF;
+  --border-base: #E7D5C0;  --fg-base: #3F3028;  --fg-subtle: #86756A;
+  --primary: #8B6040;  --primary-soft: #EDDDCA;  --highlight: #C6975D;
+  --on-primary: #FFFFFF;
+}
+html[data-theme="theme-04"][data-mode="dark"] {
+  --page-bg: #2B1E17;  --card-bg: #38261E;  --panel-bg: #4B352A;
+  --border-base: #6F5141;  --fg-base: #FCF7F1;  --fg-subtle: #D4C0B2;
+  --primary: #E0B37E;  --primary-soft: #563E31;  --highlight: #D6A567;
+  --on-primary: #372215;
+}
+
+/* 05 · 岩茶棕灰 · 轻奢成熟
+   注意：生产版已替换旧「梅子酒紫」。酒紫那套（#8A3F6B / #39152E）作废。 */
+html[data-theme="theme-05"][data-mode="light"] {
+  --page-bg: #F8F6F3;  --card-bg: #FFFEFC;  --panel-bg: #EEE9E4;
+  --border-base: #DCD3CA;  --fg-base: #352E2A;  --fg-subtle: #7A706A;
+  --primary: #6E5B50;  --primary-soft: #E9E0DA;  --highlight: #A88C69;
+  --on-primary: #FFFFFF;
+}
+html[data-theme="theme-05"][data-mode="dark"] {
+  --page-bg: #2A2420;  --card-bg: #352E29;  --panel-bg: #463C35;
+  --border-base: #66574E;  --fg-base: #FAF7F4;  --fg-subtle: #C9BEB7;
+  --primary: #B79B89;  --primary-soft: #56473F;  --highlight: #D0B17F;
+  --on-primary: #2A2420;
+}
+
+/* 06 · 海军蓝金 · 经典精致
+   规范里唯一一套「深色模式下主 CTA 反转成金色」的主题，所以两份 --on-primary
+   差别最大：浅色是白字压海军蓝，深色是深蓝字压金色。 */
+html[data-theme="theme-06"][data-mode="light"] {
+  --page-bg: #F8F6F0;  --card-bg: #FFFDF8;  --panel-bg: #F3EBD9;
+  --border-base: #D9C8A5;  --fg-base: #0F2B4D;  --fg-subtle: #6C7682;
+  --primary: #163E69;  --primary-soft: #DFE8F1;  --highlight: #C79A3B;
+  --on-primary: #FFFFFF;
+}
+html[data-theme="theme-06"][data-mode="dark"] {
+  --page-bg: #081D33;  --card-bg: #0D2946;  --panel-bg: #173858;
+  --border-base: #31567C;  --fg-base: #F6F9FC;  --fg-subtle: #B8C7D6;
+  --primary: #E0B653;  --primary-soft: #1B4164;  --highlight: #F0C969;
+  --on-primary: #0D2946;
+}
+
+/* 07 · 月光银蓝 · 冷静高级 */
+html[data-theme="theme-07"][data-mode="light"] {
+  --page-bg: #F5F9FD;  --card-bg: #FFFFFF;  --panel-bg: #EAF2FA;
+  --border-base: #CDDDEB;  --fg-base: #163A61;  --fg-subtle: #71889D;
+  --primary: #2F659B;  --primary-soft: #DFEAF6;  --highlight: #82B7EA;
+  --on-primary: #FFFFFF;
+}
+html[data-theme="theme-07"][data-mode="dark"] {
+  --page-bg: #0C2540;  --card-bg: #132F4F;  --panel-bg: #1D4167;
+  --border-base: #3B6187;  --fg-base: #F3F8FD;  --fg-subtle: #B5C8DA;
+  --primary: #78B6F0;  --primary-soft: #254D74;  --highlight: #A8D2F8;
+  --on-primary: #0C2540;
+}
+
+/* 08 · 焦糖燕麦 · 温柔质感 */
+html[data-theme="theme-08"][data-mode="light"] {
+  --page-bg: #FBF7F1;  --card-bg: #FFFCF8;  --panel-bg: #F4E5D5;
+  --border-base: #E6CCB2;  --fg-base: #4A2F20;  --fg-subtle: #8A6F5F;
+  --primary: #96521F;  --primary-soft: #F3DDC8;  --highlight: #D88942;
+  --on-primary: #FFFFFF;
+}
+html[data-theme="theme-08"][data-mode="dark"] {
+  --page-bg: #2C190F;  --card-bg: #3B2215;  --panel-bg: #53301C;
+  --border-base: #744A31;  --fg-base: #FFF8F2;  --fg-subtle: #D9C2B1;
+  --primary: #E39A58;  --primary-soft: #643A22;  --highlight: #F1A75E;
+  --on-primary: #3B2215;
+}
+
+/* 09 · 玉雾青灰 · 清冷知性 */
+html[data-theme="theme-09"][data-mode="light"] {
+  --page-bg: #F4FAF9;  --card-bg: #FFFFFF;  --panel-bg: #E7F1EF;
+  --border-base: #C9DDDA;  --fg-base: #123D3B;  --fg-subtle: #708B89;
+  --primary: #356F69;  --primary-soft: #DDEDEA;  --highlight: #74B9B0;
+  --on-primary: #FFFFFF;
+}
+html[data-theme="theme-09"][data-mode="dark"] {
+  --page-bg: #0C2D2D;  --card-bg: #123C3A;  --panel-bg: #1A504C;
+  --border-base: #376D68;  --fg-base: #F2FBF9;  --fg-subtle: #B5CECA;
+  --primary: #86D2C9;  --primary-soft: #225E59;  --highlight: #62C3B7;
+  --on-primary: #123C3A;
+}
+
+/* 10 · 橄榄奶茶 · 轻熟柔和 */
+html[data-theme="theme-10"][data-mode="light"] {
+  --page-bg: #FAF8F2;  --card-bg: #FFFDF8;  --panel-bg: #F1ECE0;
+  --border-base: #DFD6C3;  --fg-base: #3E3B27;  --fg-subtle: #7A7663;
+  --primary: #6E6A3E;  --primary-soft: #E8E3D2;  --highlight: #B08D4F;
+  --on-primary: #FFFFFF;
+}
+html[data-theme="theme-10"][data-mode="dark"] {
+  --page-bg: #262719;  --card-bg: #343623;  --panel-bg: #494A2E;
+  --border-base: #696845;  --fg-base: #FAF9F2;  --fg-subtle: #CFCDBD;
+  --primary: #C6B779;  --primary-soft: #59593A;  --highlight: #D0AA63;
+  --on-primary: #2D2E1B;
+}
+
+/* 11 · 雾霾蓝灰 · 通勤经典 */
+html[data-theme="theme-11"][data-mode="light"] {
+  --page-bg: #F5F8FB;  --card-bg: #FFFFFF;  --panel-bg: #EAF0F5;
+  --border-base: #D0DCE6;  --fg-base: #1D3B59;  --fg-subtle: #6F8192;
+  --primary: #3F6C97;  --primary-soft: #DEE9F3;  --highlight: #7FA7CE;
+  --on-primary: #FFFFFF;
+}
+html[data-theme="theme-11"][data-mode="dark"] {
+  --page-bg: #17283A;  --card-bg: #21364C;  --panel-bg: #2C465F;
+  --border-base: #49647D;  --fg-base: #F4F8FB;  --fg-subtle: #B5C3CF;
+  --primary: #78A8D2;  --primary-soft: #35536D;  --highlight: #9CC1E1;
+  --on-primary: #17283A;
+}
+
+/* 12 · 冰川青蓝 · 清爽专业 */
+html[data-theme="theme-12"][data-mode="light"] {
+  --page-bg: #F2FBFD;  --card-bg: #FFFFFF;  --panel-bg: #E2F6FA;
+  --border-base: #C4E6EC;  --fg-base: #0C3A56;  --fg-subtle: #63839A;
+  --primary: #007B9F;  --primary-soft: #D2F1F7;  --highlight: #21C7D9;
+  --on-primary: #FFFFFF;
+}
+html[data-theme="theme-12"][data-mode="dark"] {
+  --page-bg: #062A3E;  --card-bg: #073A53;  --panel-bg: #0A4D69;
+  --border-base: #24728D;  --fg-base: #F1FBFE;  --fg-subtle: #A9CAD5;
+  --primary: #32C7E2;  --primary-soft: #0E607A;  --highlight: #31D7D6;
+  --on-primary: #062A3E;
+}
+
+/* 深色版的派生色要重算：直接把 #FFF 压在主色上，在浅主色（如 #9BD3AA）上
+   等于白底白字。这里让 hover 变**亮**而不是变暗 —— 深色底上「靠近光源」
+   才是悬停的直觉方向，变暗会和禁用的观感撞车。 */
+html[data-mode="dark"] {
+  --primary-hover: color-mix(in oklab, var(--primary) 84%, #FFF);
+  --highlight-soft: color-mix(in oklab, var(--highlight) 22%, var(--page-bg));
+}
+
+/* ==========================================================================
+   映射到既有 token 名
+
+   app.css / admin.css 通篇引用的是下面右边这批名字（--bg / --surface /
+   --fg / --border / --accent ...）。这 12 套主题本身用的是规范里的名字
+   （page-bg / card-bg / ...）。两边不做映射的话，就得把 app.css 里几百处
+   var() 全改一遍 —— 那是一次纯搬运，还容易漏掉几处让页面半新半旧。
+
+   所以映射就放在这一层：左边是组件已经在用的名字，右边是上面 12 套主题解出来的
+   语义名。组件不动，主题能换。
+   ========================================================================== */
+
+:root {
+  /* 页面与面 */
+  --bg:            var(--page-bg);
+  --bg-elevated:   var(--card-bg);
+  --bg-sunken:     var(--panel-bg);
+  --surface:       var(--card-bg);
+  --surface-alt:   var(--panel-bg);
+  --surface-sunken: var(--panel-bg);
+  --surface-hover: color-mix(in oklab, var(--primary) 7%, var(--card-bg));
+
+  /* 文字 */
+  --text:        var(--fg-base);
+  --text-strong: var(--fg-base);
+  --text-muted:  var(--fg-subtle);
+  --text-faint:  color-mix(in oklab, var(--fg-subtle) 76%, var(--page-bg));
+  --fg:          var(--fg-base);
+  --fg-muted:    var(--fg-subtle);
+  /* --fg-subtle 已经在 tokens.css 里定义过、并且只在 admin.css 用了 4 处。
+     这里**不能**写 `--fg-subtle: var(--fg-subtle)` —— 那是自引用，CSS 会
+     把整个变量判为无效（循环依赖），连带把上面引用它的 --text-muted 一起
+     打掉。tokens.css 那份的值会照常生效。 */
+
+  /* 线与描边 */
+  --line:          var(--border-base);
+  --line-strong:   color-mix(in oklab, var(--border-base) 72%, var(--fg-base));
+  --border:        var(--border-base);
+  --border-subtle: color-mix(in oklab, var(--border-base) 55%, var(--card-bg));
+  --border-strong: color-mix(in oklab, var(--border-base) 72%, var(--fg-base));
+  --border-hover:  var(--primary);
+  --focus-ring:    var(--highlight);
+
+  /* 主色系。--brand-* 与 --accent-* 是同一批值的两个名字（tokens.css 里
+     已经解释过为什么两组都留着），这里两边都指到主题主色上。 */
+  --accent:          var(--primary);
+  --accent-strong:   var(--primary-hover);
+  --accent-soft:     var(--primary-soft);
+  --accent-ink:      var(--on-primary);
+  --brand-accent:        var(--primary);
+  --brand-accent-strong: var(--primary-hover);
+  --brand-accent-soft:   var(--primary-soft);
+  --brand-accent-hover:  var(--primary-hover);
+  --brand-soft:  var(--primary-soft);
+  --brand-fg:    var(--primary);
+  --brand-deep:  var(--primary-hover);
+  --brand-ink:   var(--fg-base);
+  --brand-ring:  color-mix(in oklab, var(--primary) 28%, transparent);
+  --link:        var(--primary);
+
+  /* 语义色（成功/警告/危险/信息）不跟主题走。
+     理由：它们表达的是**状态**，不是风格。一套主题里"危险"如果被染成橄榄绿，
+     用户在「删除记录」上就少了一层颜色提示。所以这四组在所有 24 种外观里
+     保持同一个含义层，只在深色模式下整体提亮，否则在深底上读不清。 */
+  --success:      #0F7A5A;  --success-soft: #E3F5EE;
+  --warning:      #976222;  --warning-soft: #FBF1E2;
+  --danger:       #C0392B;  --danger-soft:  #FBEAE8;
+  --info:         #1D4FD7;  --info-soft:    #E8EFFD;
+  --success-fg: var(--success);  --success-bg: var(--success-soft);
+  --warn-fg:    var(--warning);  --warn-bg:    var(--warning-soft);
+  --warning-fg: var(--warning);
+  --danger-fg:  var(--danger);   --danger-bg:  var(--danger-soft);
+  --info-fg:    var(--info);     --info-bg:    var(--info-soft);
+  --warn:       var(--warning);
+
+  /* 教学色。
+     --teach-expression 是字幕里重点表达的底色/下划线色。规范把它归到
+     --highlight（"关键词/Focus"），所以它跟着主题走 —— 但只跟 highlight，
+     不跟 primary：同一句话里 primary 已经被当前句高亮占用了，两个都取主色
+     会分不出哪一层是哪一层。 */
+  --teach-expression:      var(--highlight);
+  --teach-expression-line: color-mix(in oklab, var(--highlight) 74%, var(--fg-base));
+  --teach-level1-fg:       var(--highlight);
+  --teach-level2-fg:       color-mix(in oklab, var(--highlight) 55%, var(--primary));
+  --teach-key-bg:          var(--highlight-soft);
+  --teach-key-fg:          color-mix(in oklab, var(--highlight) 62%, var(--fg-base));
+  --teach-word-active-bg:  color-mix(in oklab, var(--primary) 16%, transparent);
+  --teach-word-active-fg:  inherit;
+  --teach-word-active-underline: color-mix(in oklab, var(--primary) 55%, transparent);
+
+  /* VIP 徽章固定金色，不随主题主色走 —— 规范第 1 节：「VIP 永远使用固定金色，
+     不随主题主色变化」。所以这里刻意**不**引用 --primary。 */
+  --vip-bg: #FBF0D2;
+  --vip-fg: #8A5A12;
+
+  /* 控制端侧边栏：始终是深色 chrome 面，不参与主题（tokens.css 原有决定） */
+  --sidebar-bg:     #22323F;
+  --sidebar-fg:     #E8EFF8;
+  --sidebar-muted:  #A3B5CC;
+  --sidebar-border: #2D4057;
+  --sidebar-hover:  rgba(255, 255, 255, .07);
+  --sidebar-active: color-mix(in oklab, var(--primary) 18%, transparent);
+}
+
+/* 深色模式下要单独处理的几组 */
+html[data-mode="dark"] {
+  --success: #4ED8A8;  --success-soft: #17362D;
+  --warning: #E5BC7E;  --warning-soft: #362C1B;
+  --danger:  #F08A80;  --danger-soft:  #3A1F1D;
+  --info:    #7FA9F5;  --info-soft:    #1B2740;
+
+  --vip-bg: #3A2C1B;
+  --vip-fg: #E8C88A;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .30);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, .34);
+  --shadow-lg: 0 14px 40px rgba(0, 0, 0, .44);
+}
+
+/* VIP 在浅色底上要用更深的金当字色，否则 #E8C88A 压在奶油白上看不见。
+   浅色那份写在上面的 :root 里（#8A5A12）。 */
+
+/* ==========================================================================
+   播放器表面
+
+   视频页是一块**独立于页面主题的深色表面**。原因不是审美，是光学：一块亮
+   视频帧旁边再放一块亮字幕面板，字幕会被视频的亮度压下去，而字幕恰恰是这
+   个产品里唯一必须逐字看清的东西。
+
+   但也不能简单锁成「固定值」—— 12 套主题各自的主色不一样，把主色锁死会
+   让播放器里那颗播放键在 11 套主题下都变成别的色系。所以：**面锁深，色跟主题**。
+   面板底色固定在深色区间，主色/强调色仍从当前主题读。
+   ========================================================================== */
+.player-surface {
+  --surface:     #FFFFFF;
+  --surface-alt: #F3F7FB;
+  --text:        #17263D;
+  --text-muted:  #536983;
+  --line:        #DCE5EF;
+  --border:      #DCE5EF;
+  --fg:          #17263D;
+  --fg-muted:    #536983;
+  --accent-on-surface: var(--primary);
+}
+html[data-mode="dark"] .player-surface {
+  --surface:     #172536;
+  --surface-alt: #1C2D41;
+  --text:        #E8EFF8;
+  --text-muted:  #A3B5CC;
+  --line:        #2D4057;
+  --border:      #2D4057;
+  --fg:          #E8EFF8;
+  --fg-muted:    #A3B5CC;
+}
+
+/* 主题切换只做 160ms 淡化（规范第 6 节、第 7 节）。
+   注意这里动的是 background-color / color 而不是 all：写 all 会把 transform
+   也带上，每次切主题整页重排一次，手机上是肉眼可见的卡顿。 */
+html {
+  transition: background-color 160ms ease, color 160ms ease;
+}
+html[data-mode] body {
+  transition: background-color 160ms ease, color 160ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  html, html[data-mode] body { transition: none; }
+}

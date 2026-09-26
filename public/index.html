@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#346DA5">
+  <title>Eastudy · 英语视频学习</title>
+  <meta name="description" content="通过真实语速的英语视频学习,支持逐句字幕、生词本与学习计划。">
+
+  <!-- 三个样式表，顺序是有意义的：
+
+       tokens.css      与主题无关的尺度（圆角、间距、字号、动效）
+       themes-12.css   12 套色系 × 浅深两版 + 映射到组件在用的 token 名
+       app.css         组件样式，通篇只引用语义 token
+
+       themes-12.css 必须在 tokens.css 之后（它要用 --dur-theme 那类尺度值），
+       app.css 放最后（它的规则要在 token 都就位之后再消费）。
+
+       旧版这里走过一次弯路：四个样式表各自重定义 :root，谁赢取决于加载
+       顺序。现在颜色只有一个来源。 -->
+  <link rel="stylesheet" href="/assets/tokens.css">
+  <link rel="stylesheet" href="/assets/themes-12.css">
+  <link rel="stylesheet" href="/assets/app.css">
+
+  <!-- 首帧之前先把主题刷上，否则深色用户每次导航都会闪一下白。
+
+       这段必须**内联且同步**：它得赶在浏览器第一次绘制之前跑完，任何外部
+       文件（哪怕是 defer 的）都已经晚了。代价是 CSP 里要给它留一个 hash ——
+       dist/_headers 的 script-src 是 'self' + hash 白名单，没有 'unsafe-inline'。
+       改这段脚本必须同步重算 hash，tools/build.mjs 会在构建时校验。
+
+       它读的东西必须和 src/ui/theme.js 完全一致：色系存在 eastudy.v3.theme
+       （theme-01..12），模式存在 eastudy.v3.mode（light/dark/system）。两边
+       一旦分叉，表现是"首帧一个颜色、JS 起来之后跳成另一个"，只在冷启动可见。 -->
+  <script>
+    (function () {
+      try {
+        var d = document.documentElement;
+        var theme = localStorage.getItem('eastudy.v3.theme');
+        var mode = localStorage.getItem('eastudy.v3.mode');
+
+        // 旧版存的是 light / dark / warm —— 迁移规则与 theme.js 的
+        // LEGACY_ALIASES 一致，两处要一起改。
+        if (theme === 'light' || theme === 'dark') { mode = theme; theme = null; }
+        if (theme === 'warm') { theme = 'theme-08'; mode = 'dark'; }
+
+        if (!/^theme-(0[1-9]|1[0-2])$/.test(theme || '')) theme = 'theme-01';
+        if (mode !== 'light' && mode !== 'dark') {
+          mode = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+
+        d.dataset.theme = theme;
+        d.dataset.mode = mode;
+        d.style.colorScheme = mode;
+      } catch (e) { /* 无痕模式：落到 :root 的默认值 */ }
+    })();
+  </script>
+</head>
+<body>
+  <div id="app">
+    <!-- Shown until the module graph boots. Removed by replaceChildren(). -->
+    <div class="boot" role="status" aria-live="polite">
+      <span class="boot__logo" aria-hidden="true">E</span>
+      <p class="boot__text">正在加载…</p>
+    </div>
+  </div>
+
+  <noscript>
+    <div class="fatal">
+      <h1>需要启用 JavaScript</h1>
+      <p>Eastudy 的视频播放与字幕功能依赖 JavaScript,请在浏览器设置中开启后重试。</p>
+    </div>
+  </noscript>
+
+  <!-- Classic scripts, no `defer`, and before the module on purpose.
+
+       `env.js` defines the global the app reads at import time, and
+       `supabase.js` (the supabase-js UMD build) defines `globalThis.supabase`
+       that src/services/auth.js calls into the moment it loads. A module
+       script executes after the document is parsed, so anything these two must
+       have set up has to be a blocking classic script ahead of it — with
+       `defer` the ordering would depend on how the browser interleaves the
+       deferred and module queues, and a wrong guess shows up as
+       "supabase is not defined" on first paint, not as a build error.
+
+       Vendored rather than fetched from a CDN, same as hls.js below: the app
+       must keep working when a corporate proxy blocks third-party hosts, and
+       the bytes we reviewed must be the bytes we deploy. -->
+  <script src="/env.js"></script>
+  <script src="/assets/vendor/supabase.js"></script>
+
+  <!-- hls.js is loaded from our own origin, not a CDN: the player must keep
+       working when a corporate proxy blocks third-party script hosts. -->
+  <script src="/assets/vendor/hls.min.js" defer></script>
+  <script type="module" src="/assets/app.js"></script>
+</body>
+</html>
